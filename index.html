@@ -1,0 +1,99 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FluentStep - Learn English in Context</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #F8FAFC;
+            --text-primary: #0F172A;
+            --card-bg: #FFFFFF;
+            --border-primary: #E2E8F0;
+            --accent-soft: #EEF2FF;
+            --accent-primary: #4F46E5; /* Indigo 600 */
+            --accent-text: #FFFFFF;
+            --shadow-color: rgba(79, 70, 229, 0.15);
+        }
+
+        [data-theme='night'] {
+            --bg-primary: #020617;
+            --text-primary: #F8FAFC;
+            --card-bg: #1E293B;
+            --border-primary: #334155;
+            --accent-soft: #1E1B4B;
+            --accent-primary: #4338CA; /* Indigo 700 */
+            --accent-text: #FFFFFF;
+            --shadow-color: rgba(0, 0, 0, 0.4);
+        }
+
+        [data-theme='sepia'] {
+            --bg-primary: #FDF6E3;
+            --text-primary: #586E75;
+            --card-bg: #EEE8D5;
+            --border-primary: #D3D3D3;
+            --accent-soft: #F5E5C0;
+            --accent-primary: #859900; /* Solarized Green - Eye Friendly Accent */
+            --accent-text: #FDF6E3;
+            --shadow-color: rgba(133, 153, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+        
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .snap-y::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .snap-y {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .theme-transition {
+            transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease, shadow 0.5s ease, background 0.5s ease;
+        }
+
+        ::selection {
+            background: #6366f1;
+            color: white;
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <div id="root"></div>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
