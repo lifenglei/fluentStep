@@ -99,26 +99,40 @@ const App: React.FC = () => {
     // 默认图片路径
     const defaultImage = '/images/meng.jpg';
     
+    // 创建 AbortController 用于取消请求
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => {
+      // 超时后取消请求
+      abortController.abort();
+      console.log("Image generation timeout, request cancelled");
+    }, 10000); // 60秒超时
+    
     try {
-      // 添加超时处理（30秒）
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Image generation timeout')), 2 * 60 * 1000);
-      });
+      //本地调试先注释掉，使用默认图片
+      // const img = await generatePhraseImage(exercise.chineseMeaning, abortController.signal);
       
-      const img = await Promise.race([
-        generatePhraseImage(exercise.chineseMeaning),
-        timeoutPromise
-      ]);
+      // 清除超时定时器（如果请求成功完成）
+      clearTimeout(timeoutId);
       
       // 如果返回 null 或空字符串，使用默认图片
-      if (img) {
-        setCurrentPhraseImage(img);
-      } else {
-        setCurrentPhraseImage(defaultImage);
-      }
+      setCurrentPhraseImage(defaultImage);
+      // if (img) {
+      //   setCurrentPhraseImage(img);
+      // } else {
+      //   setCurrentPhraseImage(defaultImage);
+      // }
     } catch (err) {
+      // 清除超时定时器
+      clearTimeout(timeoutId);
+      
+      // 如果是取消请求，直接使用默认图片，不记录错误
+      if (err instanceof Error && err.name === 'AbortError') {
+        setCurrentPhraseImage(defaultImage);
+        return;
+      }
+      
       console.error("Failed to load phrase image:", err);
-      // 超时或错误时使用默认图片
+      // 错误时使用默认图片
       setCurrentPhraseImage(defaultImage);
     } finally {
       setIsImageLoading(false);
@@ -291,16 +305,19 @@ const App: React.FC = () => {
               </div>
             )}
 
-            {(selectedScenario || showMistakes) && (
-              <button onClick={handleReset} className="hidden md:block px-5 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all">Exit</button>
-            )}
+       
 
             {/* Logout Button */}
             <button 
               onClick={handleLogout}
-              className="hidden md:block px-5 py-2 bg-slate-500/10 hover:bg-slate-500/20 text-slate-600 dark:text-slate-400 rounded-xl font-semibold text-xs uppercase tracking-wider transition-all"
+              className="flex items-center gap-2 px-4 md:px-6 py-2.5 md:py-3 bg-white text-slate-900 rounded-xl font-bold text-xs md:text-sm uppercase tracking-wide transition-all shadow-lg hover:shadow-xl hover:bg-slate-50 active:scale-95 border border-slate-200"
             >
-              Logout
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              <span>Logout</span>
             </button>
           </div>
         </div>
@@ -374,7 +391,7 @@ const App: React.FC = () => {
               </div>
 
               {exercises.length > 0 ? (
-                <div className="space-y-10">
+                <div>
                   <ExerciseItem 
                     key={exercises[currentIndex].id} 
                     exercise={exercises[currentIndex]} 
@@ -382,30 +399,14 @@ const App: React.FC = () => {
                     isImageLoading={isImageLoading}
                     onComplete={handleExerciseComplete}
                     onMistake={handleMistake}
+                    onPrev={goToPrev}
+                    onNext={goToNext}
+                    canGoPrev={currentIndex > 0}
+                    canGoNext={isCurrentSolved && currentIndex < exercises.length - 1}
+                    isMilestoneReached={isMilestoneReached}
+                    onShowSummary={() => setShowSummary(true)}
+                    isLast={currentIndex === exercises.length - 1}
                   />
-
-                  <div className="flex items-center justify-between mt-16 p-3 bg-[var(--card-bg)]/50 backdrop-blur-md rounded-[3rem] border border-[var(--border-primary)] theme-transition">
-                    <button onClick={goToPrev} disabled={currentIndex === 0} className={`h-12 w-12 md:h-14 md:w-14 flex items-center justify-center rounded-full transition-all ${currentIndex === 0 ? 'opacity-0' : 'bg-[var(--card-bg)] text-slate-400 hover:text-indigo-600 hover:shadow-lg active:scale-90 shadow-sm border border-[var(--border-primary)]'}`}>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5m7 7l-7-7 7-7"/></svg>
-                    </button>
-                    <div className="flex-grow flex justify-center">
-                       <div className="flex items-center gap-2">
-                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                         <span className="text-[9px] md:text-[11px] font-black text-slate-400 uppercase tracking-[0.5em]">Live AI Environment</span>
-                       </div>
-                    </div>
-                    {isMilestoneReached ? (
-                      <button onClick={() => setShowSummary(true)} style={{ background: 'var(--accent-primary)', color: 'var(--accent-text)', boxShadow: '0 25px 50px -12px var(--shadow-color)' }} className="h-12 md:h-14 flex items-center gap-3 md:gap-4 px-5 md:px-8 rounded-full transition-all font-semibold text-sm md:text-base hover:scale-[1.02] active:scale-95 animate-bounce-slow">
-                        Review 10
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-                      </button>
-                    ) : (
-                      <button onClick={goToNext} disabled={!isCurrentSolved || currentIndex >= exercises.length - 1} className={`h-12 md:h-14 flex items-center gap-3 md:gap-4 px-5 md:px-8 rounded-full transition-all font-semibold text-sm md:text-base ${(!isCurrentSolved || currentIndex >= exercises.length - 1) ? 'bg-slate-200 text-slate-400' : 'bg-slate-900 text-white hover:bg-indigo-600 hover:scale-[1.02] shadow-xl active:scale-95'}`}>
-                        {currentIndex === exercises.length - 1 ? 'Finish' : 'Next'}
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
-                      </button>
-                    )}
-                  </div>
                 </div>
               ) : (
                 <div className="py-40 flex flex-col items-center bg-[var(--card-bg)]/80 backdrop-blur-2xl rounded-[4rem] shadow-2xl border border-[var(--border-primary)]">

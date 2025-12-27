@@ -2,7 +2,7 @@
 import { PhraseExercise } from "./types";
 
 // ModelGate API 配置
-const MODELGATE_API_KEY = process.env.API_KEY || '';
+const MODELGATE_API_KEY = process.env.GEMINI_API_KEY || '';
 const MODELGATE_BASE_URL = 'https://mg.aid.pub/v1';
 
 export async function fetchPhrases(scenario: string, count: number = 10): Promise<PhraseExercise[]> {
@@ -15,6 +15,8 @@ IMPORTANT:
 2. Provide the standard IPA (International Phonetic Alphabet) for the 'correctAnswer' word in the 'phonetic' field.
 3. Provide EXACTLY 5 diverse example sentences using the 'correctAnswer' word.
 4. Each example must have both 'en' (English) and 'zh' (Chinese translation).
+5. Provide the part of speech (partOfSpeech) for the 'correctAnswer' word (e.g., "noun", "verb", "adjective", "adverb").
+6. Provide 2-3 common collocations (commonCollocations) - phrases or words that commonly go with the 'correctAnswer' word.
 Return the data in a structured JSON format as an array of objects with the following structure:
 {
   "id": "unique-id",
@@ -23,6 +25,8 @@ Return the data in a structured JSON format as an array of objects with the foll
   "correctAnswerChinese": "中文翻译",
   "chineseMeaning": "完整句子中文翻译",
   "phonetic": "/IPA符号/",
+  "partOfSpeech": "noun",
+  "commonCollocations": ["collocation 1", "collocation 2"],
   "additionalExamples": [
     {"en": "example sentence 1", "zh": "中文翻译1"},
     {"en": "example sentence 2", "zh": "中文翻译2"},
@@ -116,7 +120,7 @@ export async function generateScenarioImage(scenarioTitle: string): Promise<stri
   }
 }
 
-export async function generatePhraseImage(phrase: string): Promise<string | null> {
+export async function generatePhraseImage(phrase: string, signal?: AbortSignal): Promise<string | null> {
   try {
     const prompt = `A minimalist, high-end 3D render or artistic illustration representing the concept: "${phrase}". Clean background, vibrant colors, studio lighting, professional conceptual art style.`;
 
@@ -132,7 +136,8 @@ export async function generatePhraseImage(phrase: string): Promise<string | null
         size: '864x1184',
         output_type: 'base64',
         output_format: 'png'  
-      })
+      }),
+      signal // 传递 AbortSignal 以支持取消请求
     });
 
     if (!response.ok) {
@@ -150,6 +155,11 @@ export async function generatePhraseImage(phrase: string): Promise<string | null
 
     return base64Image;
   } catch (error) {
+    // 如果是取消请求，不记录错误
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.log("Image generation request was cancelled");
+      return null;
+    }
     console.error("Error generating phrase image:", error);
     return null;
   }

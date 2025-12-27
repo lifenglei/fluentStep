@@ -13,6 +13,9 @@ export interface PhraseExercise {
   phonetic: string; // IPA phonetic symbols
   additionalExamples: Example[]; // Updated to object with en and zh
   hint: string;
+  partOfSpeech?: string; // e.g., "noun", "verb", "adjective"
+  commonCollocations?: string[]; // Common word combinations
+  synonyms?: string[]; // Synonyms (optional)
 }
 
 export interface Scenario {
