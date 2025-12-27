@@ -10,10 +10,30 @@ import SummarySection from './components/SummarySection';
 import MistakeList from './components/MistakeList';
 import AuthForm from './components/AuthForm';
 import { isAuthenticated, logout, getUser, type AuthResponse } from './authService';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 type Theme = 'light' | 'night' | 'sepia';
 
 const App: React.FC = () => {
+  // 根据场景ID获取对应的FontAwesome图标
+  const getScenarioIcon = (scenarioId: string): string => {
+    switch (scenarioId) {
+      case 'airport':
+        return 'fa-plane';
+      case 'business':
+        return 'fa-briefcase';
+      case 'workplace':
+        return 'fa-building';
+      case 'travel':
+        return 'fa-globe';
+      case 'restaurant':
+        return 'fa-utensils';
+      case 'medical':
+        return 'fa-hospital';
+      default:
+        return 'fa-circle-notch';
+    }
+  };
   const [isAuthChecked, setIsAuthChecked] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
   const [user, setUser] = useState<{ id: string; email: string } | null>(null);
@@ -34,6 +54,9 @@ const App: React.FC = () => {
   
   // Mistake tracking: Record exercise and how many times it was missed
   const [mistakes, setMistakes] = useState<Record<string, { exercise: PhraseExercise, count: number }>>({});
+  
+  // Track completed exercises
+  const [completedExercises, setCompletedExercises] = useState<Set<string>>(new Set());
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -109,18 +132,18 @@ const App: React.FC = () => {
     
     try {
       //本地调试先注释掉，使用默认图片
-      // const img = await generatePhraseImage(exercise.chineseMeaning, abortController.signal);
+      const img = await generatePhraseImage(exercise.chineseMeaning, abortController.signal);
       
       // 清除超时定时器（如果请求成功完成）
       clearTimeout(timeoutId);
       
       // 如果返回 null 或空字符串，使用默认图片
       setCurrentPhraseImage(defaultImage);
-      // if (img) {
-      //   setCurrentPhraseImage(img);
-      // } else {
-      //   setCurrentPhraseImage(defaultImage);
-      // }
+      if (img) {
+        setCurrentPhraseImage(img);
+      } else {
+        setCurrentPhraseImage(defaultImage);
+      }
     } catch (err) {
       // 清除超时定时器
       clearTimeout(timeoutId);
@@ -178,6 +201,8 @@ const App: React.FC = () => {
     if (!learnedBatch.find(w => w.id === currentWord.id)) {
       setLearnedBatch(prev => [...prev, currentWord]);
     }
+    // Mark exercise as completed
+    setCompletedExercises(prev => new Set(prev).add(currentWord.id));
   };
 
   const handleMistake = (exercise: PhraseExercise) => {
@@ -197,7 +222,8 @@ const App: React.FC = () => {
     if (currentIndex < exercises.length - 1 && isCurrentSolved) {
       const nextIdx = currentIndex + 1;
       setCurrentIndex(nextIdx);
-      setIsCurrentSolved(false);
+      // Check if next exercise is already completed
+      setIsCurrentSolved(completedExercises.has(exercises[nextIdx].id));
       fetchCurrentImageImage(exercises[nextIdx]);
     }
   };
@@ -206,7 +232,8 @@ const App: React.FC = () => {
     if (currentIndex > 0) {
       const prevIdx = currentIndex - 1;
       setCurrentIndex(prevIdx);
-      setIsCurrentSolved(true);
+      // Check if previous exercise is already completed
+      setIsCurrentSolved(completedExercises.has(exercises[prevIdx].id));
       fetchCurrentImageImage(exercises[prevIdx]);
     }
   };
@@ -406,13 +433,24 @@ const App: React.FC = () => {
                     isMilestoneReached={isMilestoneReached}
                     onShowSummary={() => setShowSummary(true)}
                     isLast={currentIndex === exercises.length - 1}
+                    isCompleted={completedExercises.has(exercises[currentIndex].id)}
                   />
                 </div>
               ) : (
                 <div className="py-40 flex flex-col items-center bg-[var(--card-bg)]/80 backdrop-blur-2xl rounded-[4rem] shadow-2xl border border-[var(--border-primary)]">
-                  <div className="w-24 h-24 border-[6px] border-slate-100 border-t-indigo-600 rounded-full animate-spin mb-10"></div>
+                  <div className="w-16 h-16 flex flex-col items-center justify-center mb-10">
+                    <FontAwesomeIcon 
+                      icon={`fa-solid ${getScenarioIcon(selectedScenario?.id || '')}`} 
+                      size="3x" 
+                      className="text-indigo-600 mb-2"
+                    />
+                    <div className="flex space-x-1.5">
+                      <div className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" style={{ animationDelay: '0s' }}></div>
+                      <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                      <div className="w-2 h-2 rounded-full bg-indigo-200 animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                    </div>
+                  </div>
                   <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-3 tracking-tight text-center">Architecting Your <br/>Learning Space</h3>
-                  <p className="text-slate-400 font-medium text-base">Generating contextual visuals and phrases...</p>
                 </div>
               )}
             </div>
