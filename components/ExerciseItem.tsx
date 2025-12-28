@@ -109,12 +109,12 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 overflow-hidden rounded-3xl  border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl" style={{ gridTemplateRows: 'auto auto' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 overflow-hidden rounded-3xl border-[var(--border-primary)] bg-[var(--card-bg)] shadow-xl theme-transition" style={{ gridTemplateRows: 'auto auto' }}>
         {/* 左侧：上中下结构 */}
-        <div className="flex flex-col border-r border-slate-200 dark:border-slate-700">
+        <div className="flex flex-col border-r border-[var(--border-primary)] theme-transition">
           {/* 上：情景图片展示 */}
-          <div className="bg-white dark:bg-slate-800 overflow-hidden flex-shrink-0">
-            <div className="relative h-[calc(50vh-4rem)] min-h-[300px] max-h-[400px] bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-slate-700 dark:to-slate-800">
+          <div className="bg-[var(--card-bg)] overflow-hidden flex-shrink-0 theme-transition">
+            <div className="relative h-[calc(50vh-4rem)] min-h-[300px] max-h-[400px] bg-[var(--card-bg)]">
               {phraseImage ? (
                 <img 
                   src={phraseImage} 
@@ -124,9 +124,9 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <div className="flex space-x-1.5">
-                    <div className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" style={{ animationDelay: '0s' }}></div>
-                    <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                    <div className="w-2 h-2 rounded-full bg-indigo-200 animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                    <div className="w-2 h-2 rounded-full bg-[var(--accent-primary)] animate-pulse" style={{ animationDelay: '0s' }}></div>
+                    <div className="w-2 h-2 rounded-full bg-[var(--accent-primary)]/70 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-2 h-2 rounded-full bg-[var(--accent-primary)]/40 animate-pulse" style={{ animationDelay: '0.4s' }}></div>
                   </div>
                 </div>
               )}
@@ -136,42 +136,42 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
 
           {/* 中：单词发音翻译 - 与右侧上半部分对齐 - 仅当答对或显示答案时可见 */}
           {(isCorrect || isAnswerRevealed) && (
-            <div className="bg-white dark:bg-slate-800 p-6 flex-shrink-0" style={{ height: 'calc(50vh - 4rem)', minHeight: '300px', maxHeight: '400px' }}>
+            <div className="bg-[var(--card-bg)] dark:bg-slate-800 p-6 flex-shrink-0" style={{ height: 'calc(50vh - 4rem)', minHeight: '300px', maxHeight: '400px' }}>
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Key Word</div>
-                  <div className="text-2xl font-bold text-slate-900 dark:text-white">{exercise.correctAnswer}</div>
+                  <div className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Key Word</div>
+                  <div className="text-2xl font-bold text-[var(--text-primary)]">{exercise.correctAnswer}</div>
                   {exercise.phonetic && (
-                    <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">/{exercise.phonetic}/</div>
+                    <div className="text-sm text-[var(--text-muted)] mt-1">/{exercise.phonetic}/</div>
                   )}
                 </div>
                 <button 
-                  onClick={() => handleSpeak(exercise.correctAnswer, 'word')} 
-                  className={`p-3 rounded-xl transition-all ${
-                    isPlaying === 'word' 
-                      ? 'bg-indigo-600 text-white shadow-lg' 
-                      : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50'
-                  }`}
+                    onClick={() => handleSpeak(exercise.correctAnswer, 'word')} 
+                    className={`p-3 rounded-xl transition-all ${
+                      isPlaying === 'word' 
+                        ? 'bg-[var(--accent-primary)] text-[var(--accent-text)] shadow-lg' 
+                        : 'bg-[var(--accent-soft)] text-[var(--accent-primary)] hover:bg-[var(--accent-soft)/80]'
+                    }`}
                 >
                   <FontAwesomeIcon icon="fa-solid fa-volume-high" size="lg" />
                 </button>
               </div>
               <div className="pt-4">
-                <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-2">Translation</div>
-                <div className="text-lg font-semibold text-slate-900 dark:text-white">{exercise.correctAnswerChinese}</div>
+                <div className="text-xs font-semibold text-[var(--success)] uppercase tracking-wider mb-2">Translation</div>
+                <div className="text-lg font-semibold text-[var(--text-primary)]">{exercise.correctAnswerChinese}</div>
               </div>
             </div>
           )}
 
           {/* 下：句子翻译 - 仅当答对或显示答案时可见 */}
           {(isCorrect || isAnswerRevealed) && (
-            <div className="bg-white dark:bg-slate-800 p-6 flex-1">
-              <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-3">Full Sentence</div>
-              <div className="text-base font-medium text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
+            <div className="bg-[var(--card-bg)] p-6 flex-1 theme-transition">
+              <div className="text-xs font-semibold text-[var(--accent-primary)] uppercase tracking-wider mb-3">Full Sentence</div>
+              <div className="text-base font-medium text-[var(--text-primary)] leading-relaxed mb-3">
                 {exercise.sentenceWithBlank.replace('___', exercise.correctAnswer)}
               </div>
               <div className="pt-3">
-                <div className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                <div className="text-sm text-[var(--text-muted)] leading-relaxed">
                   {exercise.chineseMeaning}
                 </div>
               </div>
@@ -182,7 +182,7 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
         {/* 右侧：上下结构 */}
         <div className="flex flex-col">
           {/* 上：单词填写 - 与左侧图片对齐 */}
-          <div className={`bg-white dark:bg-slate-800 transition-all duration-500 border-b-2 border-slate-200 dark:border-slate-700 flex-shrink-0 ${
+          <div className={`bg-[var(--card-bg)] transition-all duration-500 border-b-2 border-[var(--border-primary)] flex-shrink-0 theme-transition ${
             isCorrect ? 'border-b-emerald-400' : 
             isError ? 'border-b-rose-400' : 
             ''
@@ -192,14 +192,14 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${
-                    isCorrect ? 'bg-emerald-500' : 
-                    isError ? 'bg-rose-500' : 
-                    'bg-indigo-500 animate-pulse'
+                    isCorrect ? 'bg-[var(--success)]' : 
+                    isError ? 'bg-[var(--error)]' : 
+                    'bg-[var(--accent-primary)] animate-pulse'
                   }`}></div>
                   <span className={`text-xs font-semibold uppercase tracking-wider ${
-                    isCorrect ? 'text-emerald-600 dark:text-emerald-400' : 
-                    isError ? 'text-rose-600 dark:text-rose-400' : 
-                    'text-slate-500 dark:text-slate-400'
+                    isCorrect ? 'text-[var(--success)]' : 
+                    isError ? 'text-[var(--error)]' : 
+                    'text-[var(--text-muted)]'
                   }`}>
                     {isCorrect ? (isAnswerRevealed ? 'Revealed' : 'Correct!') : 'Fill in the blank'}
                   </span>
@@ -209,8 +209,8 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
                     onClick={() => handleSpeak(exercise.sentenceWithBlank.replace('___', exercise.correctAnswer), 'main')} 
                     className={`p-2.5 rounded-xl transition-all ${
                       isPlaying === 'main' 
-                        ? 'bg-indigo-600 text-white shadow-lg' 
-                        : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50'
+                        ? 'bg-[var(--accent-primary)] text-[var(--accent-text)] shadow-lg' 
+                        : 'bg-[var(--accent-soft)] text-[var(--accent-primary)] hover:bg-[var(--accent-soft)/80]'
                     }`}
                   >
                     <FontAwesomeIcon icon="fa-solid fa-volume-high" size="lg" />
@@ -220,7 +220,7 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
 
               {/* Sentence with Blank */}
               <div className="text-left mb-6">
-                <div className="text-xl md:text-2xl font-semibold text-slate-900 dark:text-white leading-relaxed">
+                <div className="text-xl md:text-2xl font-semibold text-[var(--text-primary)] leading-relaxed theme-transition">
                   <span className="opacity-80">{sentenceParts[0]}</span>
                   <span className="relative inline-block mx-2 md:mx-3 align-middle">
                     <div className="relative inline-block">
@@ -232,12 +232,12 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
                         onChange={handleInputChange}
                         onBlur={handleBlur}
                         placeholder="..."
-                        className={`bg-transparent border-b border-slate-300 dark:border-slate-500 outline-none transition-all text-center px-0 py-1 min-w-[120px] md:min-w-[160px] font-semibold text-xl md:text-2xl tracking-wide placeholder:text-slate-400 placeholder:dark:text-slate-500 ${isCorrect ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : isError ? 'border-rose-500 text-rose-600 dark:text-rose-400' : 'text-indigo-600 dark:text-indigo-400 focus:border-indigo-600 dark:focus:border-indigo-500'} ${shake ? 'animate-pulse' : ''}`}
+                        className={`bg-transparent border-b border-[var(--border-primary)] outline-none transition-all text-center px-0 py-1 min-w-[120px] md:min-w-[160px] font-semibold text-xl md:text-2xl tracking-wide placeholder:text-[var(--text-muted)] ${isCorrect ? 'border-[var(--success)] text-[var(--success)]' : isError ? 'border-[var(--error)] text-[var(--error)]' : 'text-[var(--accent-primary)] focus:border-[var(--accent-primary)]'} ${shake ? 'animate-pulse' : ''} theme-transition`}
                         style={{ width: 'auto' }}
                       />
                     </div>
                   </span>
-                  <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400 ml-2">({exercise.correctAnswerChinese})</span>
+                  <span className="text-sm font-medium text-[var(--accent-primary)] ml-2">({exercise.correctAnswerChinese})</span>
                   <span className="opacity-80">{sentenceParts[1]}</span>
                 </div>
               </div>
@@ -247,7 +247,7 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
                 <div className="flex justify-center">
                   <button 
                     onClick={handleShowAnswer} 
-                    className="px-4 py-2 bg-amber-100 dark:bg-amber-900/30 hover:bg-amber-200 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-400 rounded-xl text-sm font-medium transition-all shadow-sm"
+                    className="px-4 py-2 bg-[var(--warning-bg)] hover:bg-[var(--warning-bg)/80] text-[var(--warning)] rounded-xl text-sm font-medium transition-all shadow-sm theme-transition"
                   >
                     Show Answer
                   </button>
@@ -258,32 +258,32 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
 
           {/* 下：示例演示 - 仅当答对或显示答案时可见 */}
           {(isCorrect || isAnswerRevealed) && (
-            <div className="bg-white dark:bg-slate-800 p-6 flex-1 overflow-y-auto">
-              <div className="text-sm font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-4">
+            <div className="bg-[var(--card-bg)] p-6 flex-1 overflow-y-auto theme-transition">
+              <div className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-4">
                 Example Sentences
               </div>
               <div className="space-y-3">
                 {exercise.additionalExamples.map((ex, i) => (
                   <div 
                     key={i} 
-                    className="group bg-slate-50 dark:bg-slate-700/50 p-4 rounded-xl border border-slate-200 dark:border-slate-600 hover:border-indigo-300 dark:hover:border-indigo-600 transition-all duration-300"
+                    className="group bg-[var(--bg-secondary)] p-4 rounded-xl border border-[var(--border-primary)] hover:border-[var(--accent-primary)] transition-all duration-300 theme-transition"
                   >
                     <div className="flex items-start gap-3">
                       <button 
                         onClick={() => handleSpeak(ex.en, `ex-${i}`)} 
                         className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
                           isPlaying === `ex-${i}` 
-                            ? 'bg-indigo-600 text-white shadow-lg' 
-                            : 'bg-white dark:bg-slate-600 text-slate-600 dark:text-slate-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400'
+                            ? 'bg-[var(--accent-primary)] text-[var(--accent-text)] shadow-lg' 
+                            : 'bg-[var(--card-bg)] text-[var(--text-muted)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent-primary)]'
                         }`}
                       >
                         <FontAwesomeIcon icon="fa-solid fa-volume-high" size="sm" />
                       </button>
                       <div className="flex-1 space-y-1">
-                        <p className="text-sm font-medium text-slate-900 dark:text-white leading-relaxed">
+                        <p className="text-sm font-medium text-[var(--text-primary)] leading-relaxed theme-transition">
                           {ex.en}
                         </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 italic">
+                        <p className="text-xs text-[var(--text-muted)] italic theme-transition">
                           {ex.zh}
                         </p>
                       </div>
@@ -296,11 +296,11 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
         </div>
 
         {/* 底部导航操作区域 - 与卡片融为一体 */}
-        <div className={`col-span-1 lg:col-span-2  bg-white dark:bg-slate-800 ${
-          isCorrect ? 'border-emerald-400' : 
-          isError ? 'border-rose-400' : 
-          'border-slate-200 dark:border-slate-700'
-        }`}>
+        <div className={`col-span-1 lg:col-span-2 bg-[var(--card-bg)] ${
+          isCorrect ? 'border-[var(--success)]' : 
+          isError ? 'border-[var(--error)]' : 
+          'border-[var(--border-primary)]'
+        } theme-transition`}>
           <div className="flex items-center justify-between p-4">
             <button 
               onClick={onPrev} 
@@ -308,21 +308,21 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
               className={`h-10 w-10 md:h-12 md:w-12 flex items-center justify-center rounded-full transition-all ${
                 !canGoPrev 
                   ? 'opacity-0 pointer-events-none' 
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 active:scale-90'
+                  : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--accent-soft)] active:scale-90'
               }`}
             >
               <FontAwesomeIcon icon="fa-solid fa-arrow-left" size="lg" />
             </button>
             <div className="flex-grow flex justify-center">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                <span className="text-[9px] md:text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Live AI Environment</span>
+                <div className="w-2 h-2 rounded-full bg-[var(--success)] animate-pulse"></div>
+                <span className="text-[9px] md:text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Live AI Environment</span>
               </div>
             </div>
             {isMilestoneReached && onShowSummary ? (
               <button 
                 onClick={onShowSummary} 
-                className="h-10 md:h-12 flex items-center gap-2 md:gap-3 px-4 md:px-6 rounded-full transition-all font-semibold text-xs md:text-sm bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-[1.02] active:scale-95 shadow-lg"
+                className="h-10 md:h-12 flex items-center gap-2 md:gap-3 px-4 md:px-6 rounded-full transition-all font-semibold text-xs md:text-sm bg-[var(--accent-primary)] text-[var(--accent-text)] hover:bg-[var(--accent-primary)]/90 hover:scale-[1.02] active:scale-95 shadow-lg theme-transition"
               >
                 Review 10
                 <FontAwesomeIcon icon="fa-solid fa-check" size="lg" />
@@ -333,9 +333,9 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
                 disabled={!canGoNext} 
                 className={`h-10 md:h-12 flex items-center gap-2 md:gap-3 px-4 md:px-6 rounded-full transition-all font-semibold text-xs md:text-sm ${
                   !canGoNext 
-                    ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed' 
-                    : 'bg-slate-900 dark:bg-slate-700 text-white hover:bg-indigo-600 dark:hover:bg-indigo-600 hover:scale-[1.02] shadow-lg active:scale-95'
-                }`}
+                    ? 'bg-[var(--bg-secondary)] text-[var(--text-muted)] cursor-not-allowed' 
+                    : 'bg-[var(--accent-primary)] text-[var(--accent-text)] hover:bg-[var(--accent-primary)]/90 hover:scale-[1.02] shadow-lg active:scale-95'
+                } theme-transition`}
               >
                 {isLast ? 'Finish' : 'Next'}
                 <FontAwesomeIcon icon="fa-solid fa-arrow-right" size="lg" />

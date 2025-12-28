@@ -9,8 +9,10 @@ import HomeSection from './components/HomeSection';
 import SummarySection from './components/SummarySection';
 import MistakeList from './components/MistakeList';
 import AuthForm from './components/AuthForm';
+import CheckInPage from './components/CheckInPage';
 import { isAuthenticated, logout, getUser, type AuthResponse } from './authService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useAppStore } from './store/appStore';
 
 type Theme = 'light' | 'night' | 'sepia';
 
@@ -37,26 +39,40 @@ const App: React.FC = () => {
   const [isAuthChecked, setIsAuthChecked] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
   const [user, setUser] = useState<{ id: string; email: string } | null>(null);
-  const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
-  const [exercises, setExercises] = useState<PhraseExercise[]>([]);
   const [scenarioImage, setScenarioImage] = useState<string | null>(null);
   const [currentPhraseImage, setCurrentPhraseImage] = useState<string | null>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [completedCount, setCompletedCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isCurrentSolved, setIsCurrentSolved] = useState(false);
-  const [learnedBatch, setLearnedBatch] = useState<PhraseExercise[]>([]);
-  const [showSummary, setShowSummary] = useState(false);
-  const [showMistakes, setShowMistakes] = useState(false);
   const [theme, setTheme] = useState<Theme>('light');
   
-  // Mistake tracking: Record exercise and how many times it was missed
-  const [mistakes, setMistakes] = useState<Record<string, { exercise: PhraseExercise, count: number }>>({});
-  
-  // Track completed exercises
-  const [completedExercises, setCompletedExercises] = useState<Set<string>>(new Set());
+  // Zustand store state
+  const {
+    selectedScenario,
+    exercises,
+    currentIndex,
+    completedCount,
+    isCurrentSolved,
+    learnedBatch,
+    showSummary,
+    showMistakes,
+    showCheckIn,
+    completedExercises,
+    mistakes,
+    setSelectedScenario,
+    setExercises,
+    setCurrentIndex,
+    setCompletedCount,
+    setIsCurrentSolved,
+    setLearnedBatch,
+    setShowSummary,
+    setShowMistakes,
+    setShowCheckIn,
+    setCompletedExercises,
+    setMistakes,
+    addCompletedExercise,
+    addMistake
+  } = useAppStore();
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -107,13 +123,13 @@ const App: React.FC = () => {
     setIsLoading(true);
     try {
       const newPhrases = await fetchPhrases(scenario.title, 15);
-      setExercises(prev => [...prev, ...newPhrases]);
+      setExercises([...exercises, ...newPhrases]);
     } catch (err) {
       console.error("Failed to load more phrases");
     } finally {
       setIsLoading(false);
     }
-  }, [exercises.length]);
+  }, [exercises.length, setExercises]);
 
   const fetchCurrentImageImage = async (exercise: PhraseExercise) => {
     setIsImageLoading(true);
@@ -195,27 +211,18 @@ const App: React.FC = () => {
   };
 
   const handleExerciseComplete = () => {
-    setCompletedCount(prev => prev + 1);
+    setCompletedCount(completedCount + 1);
     setIsCurrentSolved(true);
     const currentWord = exercises[currentIndex];
     if (!learnedBatch.find(w => w.id === currentWord.id)) {
-      setLearnedBatch(prev => [...prev, currentWord]);
+      setLearnedBatch([...learnedBatch, currentWord]);
     }
     // Mark exercise as completed
-    setCompletedExercises(prev => new Set(prev).add(currentWord.id));
+    addCompletedExercise(currentWord.id);
   };
 
   const handleMistake = (exercise: PhraseExercise) => {
-    setMistakes(prev => {
-      const existing = prev[exercise.id];
-      return {
-        ...prev,
-        [exercise.id]: {
-          exercise,
-          count: (existing?.count || 0) + 1
-        }
-      };
-    });
+    addMistake(exercise);
   };
 
   const goToNext = () => {
@@ -259,17 +266,17 @@ const App: React.FC = () => {
     }
   }, [currentIndex, exercises.length, selectedScenario, loadMorePhrases, isLoading]);
 
-  const isMilestoneReached = learnedBatch.length >= 10 && isCurrentSolved;
+  const isMilestoneReached = learnedBatch.length >= 2 && isCurrentSolved;
   const mistakeCount = Object.keys(mistakes).length;
 
   // 如果还在检查认证状态，显示加载
-  if (!isAuthChecked) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-        <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+    if (!isAuthChecked) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)]">
+          <div className="w-12 h-12 border-4 border-[var(--border-primary)] border-t-[var(--accent-primary)] rounded-full animate-spin"></div>
+        </div>
+      );
+    }
 
   // 如果未认证，显示登录表单
   if (!authenticated) {
@@ -277,21 +284,14 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen theme-transition text-[var(--text-primary)] flex flex-col selection:bg-indigo-600 selection:text-white">
-      {showSummary && (
-        <SummarySection 
-          words={learnedBatch} 
-          onContinue={() => { setLearnedBatch([]); setShowSummary(false); goToNext(); }} 
-        />
-      )}
-
-      <header className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${selectedScenario || showMistakes ? 'bg-[var(--card-bg)]/80 backdrop-blur-xl border-b border-[var(--border-primary)]' : 'bg-transparent'}`}>
-        <div className="max-w-[1600px] mx-auto flex justify-between items-center px-6 md:px-10 py-5">
+    <div className="min-h-screen theme-transition text-[var(--text-primary)] flex flex-col selection:bg-[var(--accent-primary)] selection:text-[var(--accent-text)]">
+      <header className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${selectedScenario || showMistakes || showSummary ? 'bg-[var(--card-bg)]/80 backdrop-blur-xl border-b border-[var(--border-primary)]' : 'bg-transparent'}`}>
+        <div className="max-w-[1600px] mx-auto flex justify-between items-center px-3 md:px-10 py-6">
           <div className="flex items-center gap-4 cursor-pointer group" onClick={() => {
             if (showMistakes) { setShowMistakes(false); }
             else if (!selectedScenario) { window.scrollTo({ top: 0, behavior: 'smooth' }); }
           }}>
-            <div className="bg-slate-900 text-white p-3 rounded-2xl group-hover:bg-indigo-600 transition-all duration-300 shadow-xl shadow-slate-200">
+            <div className="bg-[var(--accent-primary)] text-[var(--accent-text)] p-3 rounded-2xl group-hover:bg-[var(--accent-secondary)] transition-all duration-300 shadow-xl shadow-[var(--shadow-color)]">
                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
             </div>
             <h1 className={`text-xl font-bold tracking-tight transition-colors duration-500 ${selectedScenario || showMistakes ? 'text-[var(--text-primary)]' : 'text-white drop-shadow-lg'}`}>FLUENTSTEP.</h1>
@@ -302,7 +302,7 @@ const App: React.FC = () => {
             {selectedScenario && (
               <button 
                 onClick={() => setShowMistakes(true)}
-                className="relative group p-3 bg-[var(--accent-soft)] rounded-2xl border border-[var(--border-primary)] text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 transition-all theme-transition"
+                className="relative group p-3 bg-[var(--accent-soft)] rounded-2xl border border-[var(--border-primary)] text-[var(--text-muted)] hover:text-[var(--error)] hover:bg-[var(--error-bg)] transition-all theme-transition"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                 {mistakeCount > 0 && (
@@ -313,63 +313,101 @@ const App: React.FC = () => {
               </button>
             )}
 
+
+
             {/* Theme Switcher */}
             <div className="bg-[var(--accent-soft)] p-1 rounded-full flex gap-1 shadow-inner border border-[var(--border-primary)]">
-              <button onClick={() => setTheme('light')} className={`p-2 rounded-full transition-all ${theme === 'light' ? 'bg-white shadow-md text-orange-500' : 'text-slate-400'}`}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42m12.72-12.72l1.42-1.42"/></svg></button>
-              <button onClick={() => setTheme('night')} className={`p-2 rounded-full transition-all ${theme === 'night' ? 'bg-slate-800 shadow-md text-blue-400' : 'text-slate-400'}`}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
-              <button onClick={() => setTheme('sepia')} className={`p-2 rounded-full transition-all ${theme === 'sepia' ? 'bg-[#D3BFA0] shadow-md text-amber-900' : 'text-slate-400'}`}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              <button onClick={() => setTheme('light')} className={`p-2 rounded-full transition-all ${theme === 'light' ? 'bg-[var(--card-bg)] shadow-md text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42m12.72-12.72l1.42-1.42"/></svg></button>
+              <button onClick={() => setTheme('night')} className={`p-2 rounded-full transition-all ${theme === 'night' ? 'bg-[var(--card-bg)] shadow-md text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+              <button onClick={() => setTheme('sepia')} className={`p-2 rounded-full transition-all ${theme === 'sepia' ? 'bg-[var(--card-bg)] shadow-md text-[var(--accent-primary)]' : 'text-[var(--text-muted)]'}`}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
             </div>
 
-            {/* User Info */}
+            {/* User Info with Dropdown */}
             {user && (
-              <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-[var(--accent-soft)] rounded-xl border border-[var(--border-primary)]">
-                <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                  {user.email.charAt(0).toUpperCase()}
+              <div className="relative group">
+                <div className="flex items-center gap-3 px-4 py-2 bg-[var(--accent-soft)] rounded-xl border border-[var(--border-primary)] cursor-pointer transition-all hover:bg-[var(--bg-secondary)] min-w-[160px]">
+                  <div className="w-8 h-8 bg-[var(--accent-primary)] rounded-full flex items-center justify-center text-[var(--accent-text)] text-xs font-bold">
+                    {user.email.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-sm font-medium text-[var(--text-primary)] max-w-[120px] truncate">
+                    {user.email}
+                  </span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--text-muted)] transition-transform group-hover:rotate-180">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
                 </div>
-                <span className="text-sm font-medium text-[var(--text-primary)] max-w-[120px] truncate">
-                  {user.email}
-                </span>
+                
+                {/* Dropdown Menu */}
+                <div className="absolute right-0 mt-2 w-48 bg-[var(--card-bg)] rounded-xl border border-[var(--border-primary)] shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                  {/* Check-in Option */}
+                  <button 
+                    onClick={() => setShowCheckIn(true)}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-[var(--text-primary)] hover:bg-[var(--accent-soft)] transition-colors theme-transition"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                      <line x1="16" y1="2" x2="16" y2="6"/>
+                      <line x1="8" y1="2" x2="8" y2="6"/>
+                      <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    <span>签到</span>
+                  </button>
+                  
+                  {/* Logout Option */}
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-[var(--text-primary)] hover:bg-[var(--accent-soft)] transition-colors theme-transition"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                      <polyline points="16 17 21 12 16 7"></polyline>
+                      <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    <span>退出登录</span>
+                  </button>
+                </div>
               </div>
             )}
-
-       
-
-            {/* Logout Button */}
-            <button 
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 md:px-6 py-2.5 md:py-3 bg-white text-slate-900 rounded-xl font-bold text-xs md:text-sm uppercase tracking-wide transition-all shadow-lg hover:shadow-xl hover:bg-slate-50 active:scale-95 border border-slate-200"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                <polyline points="16 17 21 12 16 7"></polyline>
-                <line x1="21" y1="12" x2="9" y2="12"></line>
-              </svg>
-              <span>Logout</span>
-            </button>
           </div>
         </div>
       </header>
 
+      {/* Summary Section - Only render when showSummary is true */}
+      {showSummary && (
+        <SummarySection 
+          words={learnedBatch} 
+          onContinue={() => {
+            setLearnedBatch([]);
+            setShowSummary(false);
+            goToNext();
+          }} 
+        />
+      )}
+
       <main className="flex-grow">
         {showMistakes ? (
-          <div className="pt-32 min-h-screen">
+          <div className="pt-[82px] h-screen overflow-hidden">
             <MistakeList 
               mistakes={Object.values(mistakes)} 
               onClose={() => setShowMistakes(false)} 
             />
           </div>
+        ) : showCheckIn ? (
+          <div className="pt-[82px] h-screen overflow-hidden">
+            <CheckInPage onBack={() => setShowCheckIn(false)} />
+          </div>
         ) : !selectedScenario ? (
           <div ref={scrollContainerRef} className="h-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth">
-            <section className="h-screen w-full snap-start relative flex flex-col items-center justify-center text-center px-6 overflow-hidden bg-slate-950">
+            <section className="h-screen w-full snap-start relative flex flex-col items-center justify-center text-center px-6 overflow-hidden bg-[var(--accent-primary)]">
               <div className="absolute inset-0 z-0">
                 <img src="https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&q=80&w=1920" className="w-full h-full object-cover opacity-50" alt="" />
                 <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-transparent to-slate-950"></div>
               </div>
               <div className="relative z-10 animate-fade-in space-y-10 max-w-4xl">
-                <span className="px-8 py-3 bg-white/10 backdrop-blur-xl text-white border border-white/20 rounded-full text-xs font-black uppercase tracking-[0.4em]">Intelligence Powered by Gemini</span>
-                <h2 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight leading-tight">Visual <br/><span className="text-indigo-500">English.</span></h2>
-                <div className="pt-6">
-                  <button onClick={() => scrollContainerRef.current?.scrollTo({ top: window.innerHeight, behavior: 'smooth' })} className="px-10 py-5 bg-white text-slate-950 rounded-2xl font-semibold text-lg hover:bg-indigo-500 hover:text-white transition-all shadow-xl flex items-center gap-4 mx-auto group">
+                <span className="px-8 py-3 bg-[var(--accent-text)]/10 backdrop-blur-xl text-[var(--accent-text)] border border-[var(--accent-text)]/20 rounded-full text-xs font-black uppercase tracking-[0.4em]">Intelligence Powered by Gemini</span>
+                <h2 className="text-5xl md:text-7xl font-bold text-[var(--accent-text)] mb-6 tracking-tight leading-tight">Visual <br/><span className="text-[var(--accent-secondary)]">English.</span></h2>
+                <div className="pt-6 space-y-6">
+                  <button onClick={() => scrollContainerRef.current?.scrollTo({ top: window.innerHeight, behavior: 'smooth' })} className="px-10 py-5 bg-[var(--accent-text)] text-[var(--accent-primary)] rounded-2xl font-semibold text-lg hover:bg-[var(--accent-secondary)] hover:text-[var(--accent-text)] transition-all shadow-xl flex items-center gap-4 mx-auto group">
                     Select Scenario
                     <svg className="w-6 h-6 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
                   </button>
@@ -394,7 +432,7 @@ const App: React.FC = () => {
             <div className="max-w-7xl mx-auto px-6 md:px-10 relative z-10">
               <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
                 <div className="text-center md:text-left">
-                   <span className="text-[10px] font-semibold text-indigo-600 uppercase tracking-[0.2em] mb-1.5 block">Visual Scenario Mastery</span>
+                   <span className="text-[10px] font-semibold text-[var(--accent-primary)] uppercase tracking-[0.2em] mb-1.5 block">Visual Scenario Mastery</span>
                    <h2 className="text-2xl md:text-3xl font-bold text-[var(--text-primary)] tracking-tight">{selectedScenario.title}</h2>
                 </div>
                 <div className="flex gap-3">

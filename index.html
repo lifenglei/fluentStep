@@ -18,36 +18,99 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #F8FAFC;
-            --text-primary: #0F172A;
-            --card-bg: #FFFFFF;
-            --border-primary: #E2E8F0;
-            --accent-soft: #EEF2FF;
-            --accent-primary: #4F46E5; /* Indigo 600 */
-            --accent-text: #FFFFFF;
-            --shadow-color: rgba(79, 70, 229, 0.15);
+            /* 基础颜色 - 提升对比度与可读性 */
+            --bg-primary: #F8FAFC; /* 页面背景 - 专业浅灰，减轻视觉疲劳 */
+            --bg-secondary: #F1F5F9; /* 二级背景 - 微妙区分 */
+            --text-primary: #1E293B; /* 主要文本 - 深灰，符合WCAG对比度标准 */
+            --text-secondary: #475569; /* 次要文本 - 中灰 */
+            --text-muted: #94A3B8; /* 辅助文本 - 浅灰 */
+            
+            /* 卡片和边框 - 增强层次感 */
+            --card-bg: #FFFFFF; /* 卡片背景 - 白色 */
+            --border-primary: #E2E8F0; /* 边框颜色 - 精致浅灰 */
+            --border-secondary: #CBD5E1; /* 二级边框 */
+            
+            /* 强调色系统 - 建立清晰的视觉层级 */
+            --accent-primary: #4F46E5; /* 主要强调色 - 品牌靛蓝，权威专业 */
+            --accent-secondary: #7C3AED; /* 次要强调色 - 深紫，提供深度 */
+            --accent-tertiary: #EC4899; /* 第三强调色 - 活力粉，吸引注意力 */
+            --accent-soft: #EEF2FF; /* 柔和强调色 - 靛蓝浅色调，用于辅助元素 */
+            --accent-text: #FFFFFF; /* 强调色文本 */
+            --shadow-color: rgba(79, 70, 229, 0.25); /* 阴影颜色 - 与主色调匹配，增强立体感 */
+            
+            /* 语义化颜色 - 严格与品牌系统对齐 */
+            --success: #10B981; /* 成功 - 清晰的绿色 */
+            --success-bg: #D1FAE5; /* 成功背景 */
+            --error: #EF4444; /* 错误 - 鲜明的红色 */
+            --error-bg: #FEE2E2; /* 错误背景 */
+            --warning: #F59E0B; /* 警告 - 醒目的橙色 */
+            --warning-bg: #FEF3C7; /* 警告背景 */
+            --info: #4F46E5; /* 信息 - 与主色调统一 */
+            --info-bg: #EEF2FF; /* 信息背景 - 与柔和强调色统一 */
         }
 
         [data-theme='night'] {
-            --bg-primary: #020617;
-            --text-primary: #F8FAFC;
-            --card-bg: #1E293B;
-            --border-primary: #334155;
-            --accent-soft: #1E1B4B;
-            --accent-primary: #4338CA; /* Indigo 700 */
-            --accent-text: #FFFFFF;
-            --shadow-color: rgba(0, 0, 0, 0.4);
+            /* 基础颜色 - 营造舒适的深色环境 */
+            --bg-primary: #0F172A; /* 页面背景 - 深邃夜空蓝，减少视觉刺激 */
+            --bg-secondary: #1E293B; /* 二级背景 - 深灰，增强层次感 */
+            --text-primary: #F1F5F9; /* 主要文本 - 浅灰，减轻眼睛疲劳 */
+            --text-secondary: #CBD5E1; /* 次要文本 - 中灰 */
+            --text-muted: #64748B; /* 辅助文本 - 深灰 */
+            
+            /* 卡片和边框 - 提升精致感 */
+            --card-bg: #1E293B; /* 卡片背景 - 深灰 */
+            --border-primary: #334155; /* 边框颜色 - 深灰，微妙区分 */
+            --border-secondary: #475569; /* 二级边框 */
+            
+            /* 强调色系统 - 保持与浅色主题的一致性 */
+            --accent-primary: #818CF8; /* 主要强调色 - 明亮靛蓝，在深色背景中脱颖而出 */
+            --accent-secondary: #A78BFA; /* 次要强调色 - 明亮紫色 */
+            --accent-tertiary: #F472B6; /* 第三强调色 - 活力粉 */
+            --accent-soft: #312E81; /* 柔和强调色 - 深靛蓝，用于辅助元素 */
+            --accent-text: #FFFFFF; /* 强调色文本 */
+            --shadow-color: rgba(129, 140, 248, 0.3); /* 阴影颜色 - 增强深度感 */
+            
+            /* 语义化颜色 - 确保在深色背景中清晰可辨 */
+            --success: #34D399; /* 成功 - 明亮绿色 */
+            --success-bg: #064E3B; /* 成功背景 */
+            --error: #F87171; /* 错误 - 鲜明红色 */
+            --error-bg: #7F1D1D; /* 错误背景 */
+            --warning: #FBBF24; /* 警告 - 醒目橙色 */
+            --warning-bg: #92400E; /* 警告背景 */
+            --info: #818CF8; /* 信息 - 与主色调统一 */
+            --info-bg: #312E81; /* 信息背景 - 与柔和强调色统一 */
         }
 
         [data-theme='sepia'] {
-            --bg-primary: #FDF6E3;
-            --text-primary: #586E75;
-            --card-bg: #EEE8D5;
-            --border-primary: #D3D3D3;
-            --accent-soft: #F5E5C0;
-            --accent-primary: #859900; /* Solarized Green - Eye Friendly Accent */
-            --accent-text: #FDF6E3;
-            --shadow-color: rgba(133, 153, 0, 0.1);
+            /* 基础颜色 - 营造温暖的阅读体验 */
+            --bg-primary: #FDF6E3; /* 页面背景 - 柔和浅棕，模拟纸张质感 */
+            --bg-secondary: #EEE8D5; /* 二级背景 - 中棕 */
+            --text-primary: #586E75; /* 主要文本 - 深绿灰，确保良好对比度 */
+            --text-secondary: #657B83; /* 次要文本 - 中绿灰 */
+            --text-muted: #839496; /* 辅助文本 - 浅绿灰 */
+            
+            /* 卡片和边框 - 增强复古质感 */
+            --card-bg: #FDF6E3; /* 卡片背景 */
+            --border-primary: #E6DFC1; /* 边框颜色 - 温暖浅棕 */
+            --border-secondary: #D3CCC1; /* 二级边框 */
+            
+            /* 强调色系统 - 保持棕褐色调的和谐 */
+            --accent-primary: #859900; /* 主要强调色 - 草绿，自然和谐 */
+            --accent-secondary: #B58900; /* 次要强调色 - 深黄，温暖可靠 */
+            --accent-tertiary: #CB4B16; /* 第三强调色 - 橙红，吸引注意力 */
+            --accent-soft: #F5E5C0; /* 柔和强调色 - 浅棕，用于辅助元素 */
+            --accent-text: #FDF6E3; /* 强调色文本 */
+            --shadow-color: rgba(133, 153, 0, 0.2); /* 阴影颜色 - 增强深度感 */
+            
+            /* 语义化颜色 - 适应棕褐色调 */
+            --success: #859900; /* 成功 - 草绿 */
+            --success-bg: #F0F5D8; /* 成功背景 */
+            --error: #DC322F; /* 错误 - 鲜明红色 */
+            --error-bg: #FBECEA; /* 错误背景 */
+            --warning: #B58900; /* 警告 - 深黄 */
+            --warning-bg: #FAF3D4; /* 警告背景 */
+            --info: #859900; /* 信息 - 与主色调统一 */
+            --info-bg: #F5E5C0; /* 信息背景 - 与柔和强调色统一 */
         }
 
         body {
