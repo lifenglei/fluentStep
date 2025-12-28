@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { login, signup, type AuthResponse } from '../authService';
+import { useAuth } from '../context/AuthContext';
 
 interface AuthFormProps {
-  onAuthSuccess: (authResponse: AuthResponse) => void;
+  // No props needed
 }
 
-const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
+const AuthForm: React.FC<AuthFormProps> = () => {
+  const { login: setLogin } = useAuth();
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -43,7 +47,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
       if (isLogin) {
         // 登录流程
         const authResponse = await login(email, password);
-        onAuthSuccess(authResponse);
+        setLogin(authResponse.user);
+        navigate('/');
       } else {
         // 注册流程 - 不自动登录，需要邮箱验证
         const signupResponse = await signup(email, password);

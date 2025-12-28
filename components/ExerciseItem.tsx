@@ -3,6 +3,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { PhraseExercise } from '../types';
 import { speakText } from '../geminiService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowLeft, faCheck, faVolumeHigh } from '@fortawesome/free-solid-svg-icons';
+import '@fortawesome/fontawesome-svg-core/styles.css';
 
 interface ExerciseItemProps {
   exercise: PhraseExercise;
@@ -109,34 +111,21 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 overflow-hidden rounded-3xl border-[var(--border-primary)] bg-[var(--card-bg)] shadow-xl theme-transition" style={{ gridTemplateRows: 'auto auto' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 overflow-hidden rounded-3xl border-[var(--border-primary)] bg-[var(--card-bg)] shadow-xl theme-transition max-h-[80vh] overflow-y-auto pt-6">
         {/* 左侧：上中下结构 */}
         <div className="flex flex-col border-r border-[var(--border-primary)] theme-transition">
           {/* 上：情景图片展示 */}
-          <div className="bg-[var(--card-bg)] overflow-hidden flex-shrink-0 theme-transition">
-            <div className="relative h-[calc(50vh-4rem)] min-h-[300px] max-h-[400px] bg-[var(--card-bg)]">
-              {phraseImage ? (
-                <img 
-                  src={phraseImage} 
-                  className="w-full h-full object-cover" 
-                  alt={exercise.correctAnswer}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <div className="flex space-x-1.5">
-                    <div className="w-2 h-2 rounded-full bg-[var(--accent-primary)] animate-pulse" style={{ animationDelay: '0s' }}></div>
-                    <div className="w-2 h-2 rounded-full bg-[var(--accent-primary)]/70 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                    <div className="w-2 h-2 rounded-full bg-[var(--accent-primary)]/40 animate-pulse" style={{ animationDelay: '0.4s' }}></div>
-                  </div>
-                </div>
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-            </div>
+          <div className="bg-[var(--card-bg)] overflow-hidden flex-shrink-0 theme-transition min-h-[150px] max-h-[200px]">
+            <img 
+              src="../images/meng.jpg" 
+              className="w-full h-full object-contain" 
+              alt={exercise.correctAnswer}
+            />
           </div>
 
           {/* 中：单词发音翻译 - 与右侧上半部分对齐 - 仅当答对或显示答案时可见 */}
           {(isCorrect || isAnswerRevealed) && (
-            <div className="bg-[var(--card-bg)] dark:bg-slate-800 p-6 flex-shrink-0" style={{ height: 'calc(50vh - 4rem)', minHeight: '300px', maxHeight: '400px' }}>
+            <div className="bg-[var(--card-bg)] dark:bg-slate-800 p-6 flex-shrink-0" style={{ minHeight: '150px', maxHeight: '200px' }}>
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <div className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Key Word</div>
@@ -186,7 +175,7 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
             isCorrect ? 'border-b-emerald-400' : 
             isError ? 'border-b-rose-400' : 
             ''
-          }`} style={{ height: 'calc(50vh - 4rem)', minHeight: '300px', maxHeight: '400px' }}>
+          }`} style={{ minHeight: '150px', maxHeight: '200px' }}>
             <div className="p-6 h-full flex flex-col justify-center">
               {/* Status Badge */}
               <div className="flex items-center justify-between mb-6">
@@ -258,12 +247,12 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
 
           {/* 下：示例演示 - 仅当答对或显示答案时可见 */}
           {(isCorrect || isAnswerRevealed) && (
-            <div className="bg-[var(--card-bg)] p-6 flex-1 overflow-y-auto theme-transition">
+            <div className="bg-[var(--card-bg)] p-4 flex-1 overflow-y-auto theme-transition">
               <div className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-4">
                 Example Sentences
               </div>
               <div className="space-y-3">
-                {exercise.additionalExamples.map((ex, i) => (
+                {exercise.additionalExamples.slice(0, 3).map((ex, i) => (
                   <div 
                     key={i} 
                     className="group bg-[var(--bg-secondary)] p-4 rounded-xl border border-[var(--border-primary)] hover:border-[var(--accent-primary)] transition-all duration-300 theme-transition"
@@ -307,7 +296,7 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
               disabled={!canGoPrev} 
               className={`h-10 w-10 md:h-12 md:w-12 flex items-center justify-center rounded-full transition-all ${
                 !canGoPrev 
-                  ? 'opacity-0 pointer-events-none' 
+                  ? 'bg-[var(--bg-secondary)] text-[var(--text-muted)] cursor-not-allowed' 
                   : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--accent-soft)] active:scale-90'
               }`}
             >

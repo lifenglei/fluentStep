@@ -119,17 +119,19 @@
             color: var(--text-primary);
             margin: 0;
             padding: 0;
-            overflow-x: hidden;
+            overflow: hidden;
             transition: background-color 0.5s ease, color 0.5s ease;
         }
         
         /* Hide scrollbar for Chrome, Safari and Opera */
-        .snap-y::-webkit-scrollbar {
+        .snap-y::-webkit-scrollbar,
+        .hide-scrollbar::-webkit-scrollbar {
             display: none;
         }
 
         /* Hide scrollbar for IE, Edge and Firefox */
-        .snap-y {
+        .snap-y,
+        .hide-scrollbar {
             -ms-overflow-style: none;  /* IE and Edge */
             scrollbar-width: none;  /* Firefox */
         }

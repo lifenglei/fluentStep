@@ -22,31 +22,25 @@ const HomeSection: React.FC<HomeSectionProps> = ({ scenario, index, onSelect }) 
   const isEven = index % 2 === 0;
 
   return (
-    <section className="h-screen w-full snap-start relative flex items-center justify-center overflow-hidden bg-slate-900">
+    <section className="h-screen w-full snap-start relative flex items-center justify-center overflow-hidden bg-slate-900 group">
       {/* Immersive Background */}
       <div className="absolute inset-0">
         <img 
           src={images[scenario.id] || images.travel} 
-          className="w-full h-full object-cover opacity-60 scale-105 transition-transform duration-1000 group-hover:scale-100" 
+          className="w-full h-full object-cover opacity-70 transition-transform duration-1000 group-hover:scale-105" 
           alt={scenario.title}
         />
         <div className={`absolute inset-0 bg-gradient-to-r ${isEven ? 'from-slate-900 via-slate-900/40 to-transparent' : 'from-transparent via-slate-900/40 to-slate-900'}`}></div>
       </div>
 
-      <div className={`relative z-10 w-full max-w-7xl mx-auto px-10 flex ${isEven ? 'justify-start' : 'justify-end'}`}>
+      <div className={`relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 flex ${isEven ? 'justify-start' : 'justify-end'}`}>
         <div className={`max-w-xl space-y-8 animate-fade-in ${isEven ? 'text-left' : 'text-right'}`}>
-          {/* <div className={`inline-flex items-center gap-4 ${isEven ? 'flex-row' : 'flex-row-reverse'}`}>
-            <div className={`w-16 h-16 ${scenario.color} rounded-2xl flex items-center justify-center text-3xl shadow-2xl`}>
-              {scenario.icon}
-            </div>
-            <div className="h-[2px] w-12 bg-indigo-500"></div>
-          </div> */}
           
           <div className="space-y-4">
-            <h3 className="text-5xl md:text-6xl font-black text-white tracking-tighter leading-none">
+            <h3 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none">
               {scenario.title}
             </h3>
-            <p className="text-xl text-slate-300 font-medium leading-relaxed opacity-90">
+            <p className="text-lg md:text-xl text-slate-300 font-medium leading-relaxed opacity-90">
               {scenario.description}
             </p>
           </div>
@@ -54,11 +48,11 @@ const HomeSection: React.FC<HomeSectionProps> = ({ scenario, index, onSelect }) 
           <div className={`pt-4 flex ${isEven ? 'justify-start' : 'justify-end'}`}>
             <button 
               onClick={onSelect}
-              className="group relative px-10 py-5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full font-black text-lg transition-all shadow-2xl hover:-translate-y-1 flex items-center gap-4 overflow-hidden"
+              className="relative px-8 py-4 bg-[var(--accent-primary)] hover:bg-[var(--accent-secondary)] text-[var(--accent-text)] rounded-full font-semibold text-lg transition-all shadow-xl hover:-translate-y-1 flex items-center gap-3 overflow-hidden"
             >
-              <span className="relative z-10">Start This Scenario</span>
-              <svg className="w-6 h-6 relative z-10 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+              <span className="relative z-10">Start Learning</span>
+              <svg className="w-5 h-5 relative z-10 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
               </svg>
               <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
             </button>

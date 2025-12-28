@@ -1,5 +1,6 @@
 
 import { PhraseExercise } from "./types";
+import { apiRequest } from './services/apiService';
 
 // ModelGate API 配置
 const MODELGATE_API_KEY = process.env.GEMINI_API_KEY || '';
@@ -37,7 +38,7 @@ Return the data in a structured JSON format as an array of objects with the foll
   "hint": "hint text"
 }`;
 
-    const response = await fetch(`${MODELGATE_BASE_URL}/chat/completions`, {
+    const data = await apiRequest(`${MODELGATE_BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -50,13 +51,6 @@ Return the data in a structured JSON format as an array of objects with the foll
         max_output_tokens: 4000
       })
     });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(`ModelGate API error: ${response.status} - ${errorData.error?.message || response.statusText}`);
-    }
-
-    const data = await response.json();
     // ModelGate OpenAI Style 响应格式: data.output?.[0]?.content?.[0]?.text
     const text = data.output?.[0]?.content?.[0]?.text || data.choices?.[0]?.message?.content;
     
@@ -85,7 +79,7 @@ export async function generateScenarioImage(scenarioTitle: string): Promise<stri
   try {
     const prompt = `A cinematic, wide-angle, hyper-realistic photography of ${scenarioTitle}. Atmospheric lighting, professional color grading, empty space for UI overlay, 8k resolution.`;
 
-    const response = await fetch('https://mg.aid.pub/api/v1/images/generations', {
+    const data = await apiRequest('https://mg.aid.pub/api/v1/images/generations', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -99,13 +93,6 @@ export async function generateScenarioImage(scenarioTitle: string): Promise<stri
         output_format: 'png'
       })
     });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(`ModelGate API error: ${response.status} - ${errorData.error?.message || response.statusText}`);
-    }
-
-    const data = await response.json();
     const base64Image = data.data?.[0]?.content;
     
     if (!base64Image) {
@@ -124,7 +111,7 @@ export async function generatePhraseImage(phrase: string, signal?: AbortSignal):
   try {
     const prompt = `A minimalist, high-end 3D render or artistic illustration representing the concept: "${phrase}". Clean background, vibrant colors, studio lighting, professional conceptual art style.`;
 
-    const response = await fetch('https://mg.aid.pub/api/v1/images/generations', {
+    const data = await apiRequest('https://mg.aid.pub/api/v1/images/generations', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -140,12 +127,6 @@ export async function generatePhraseImage(phrase: string, signal?: AbortSignal):
       signal // 传递 AbortSignal 以支持取消请求
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(`ModelGate API error: ${response.status} - ${errorData.error?.message || response.statusText}`);
-    }
-
-    const data = await response.json();
     const base64Image = data.data?.[0]?.content;
     
     if (!base64Image) {
@@ -199,7 +180,7 @@ export async function speakText(text: string) {
   try {
     const prompt = `Say clearly: ${text}`;
 
-    const response = await fetch(`${MODELGATE_BASE_URL}/chat/completions`, {
+    const data = await apiRequest(`${MODELGATE_BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -211,12 +192,6 @@ export async function speakText(text: string) {
       })
     });
 
-    if (!response.ok) {
-      throw new Error(`ModelGate API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
     // 尝试从响应中提取音频数据
     const base64Audio = data.output?.[0]?.content?.[0]?.inlineData?.data || 
                        data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;

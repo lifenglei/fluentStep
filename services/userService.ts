@@ -1,4 +1,5 @@
 import { getAuthToken, getUser } from '../authService';
+import { apiRequest } from './apiService';
 
 // Supabase API 配置
 const SUPABASE_URL = 'https://zaxwascdrpnioqtvuain.supabase.co';
@@ -27,16 +28,6 @@ export interface CheckInResponse {
   lastCheckIn: string;
 }
 
-// 创建带有认证的请求头
-const createHeaders = (): HeadersInit => {
-  const token = getAuthToken();
-  return {
-    'Content-Type': 'application/json',
-    'apikey': SUPABASE_ANON_KEY,
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-  };
-};
-
 // 获取用户统计数据
 export const fetchUserStats = async (): Promise<UserStats> => {
   try {
@@ -45,17 +36,13 @@ export const fetchUserStats = async (): Promise<UserStats> => {
       throw new Error('User not authenticated');
     }
 
-    const response = await fetch(`${SUPABASE_API_URL}/user_stats?user_id=eq.${user.id}`, {
+    const stats = await apiRequest(`${SUPABASE_API_URL}/user_stats?user_id=eq.${user.id}`, {
       method: 'GET',
-      headers: createHeaders(),
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+      },
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(`Failed to fetch user stats: ${response.status} - ${errorData.message || response.statusText}`);
-    }
-
-    const stats = await response.json();
     // 处理可能的响应格式（单对象或数组）
     const rawData = Array.isArray(stats) ? stats[0] : stats;
     
@@ -90,17 +77,13 @@ export const fetchUserBadges = async (): Promise<UserBadge[]> => {
       throw new Error('User not authenticated');
     }
 
-    const response = await fetch(`${SUPABASE_API_URL}/user_badges?user_id=eq.${user.id}`, {
+    const badges = await apiRequest<UserBadge[]>(`${SUPABASE_API_URL}/user_badges?user_id=eq.${user.id}`, {
       method: 'GET',
-      headers: createHeaders(),
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+      },
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(`Failed to fetch user badges: ${response.status} - ${errorData.message || response.statusText}`);
-    }
-
-    const badges = await response.json();
     return Array.isArray(badges) ? badges : [];
   } catch (error) {
     console.error('Error fetching user badges:', error);
@@ -117,19 +100,14 @@ export const checkIn = async (): Promise<CheckInResponse> => {
       throw new Error('User not authenticated');
     }
 
-    const response = await fetch(`${SUPABASE_API_URL}/rpc/check_in_user`, {
+    const data = await apiRequest<CheckInResponse>(`${SUPABASE_API_URL}/rpc/check_in_user`, {
       method: 'POST',
-      headers: createHeaders(),
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+      },
       body: JSON.stringify({ p_user_id: user.id })
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(`Check-in failed: ${response.status} - ${errorData.message || response.statusText}`);
-    }
-
-    const data = await response.json();
-    
     // 确保返回符合CheckInResponse接口的安全数据
     return {
       success: data.success || false,
@@ -150,17 +128,13 @@ export const fetchCheckInHistory = async (): Promise<{ date: string; checked: bo
       throw new Error('User not authenticated');
     }
 
-    const response = await fetch(`${SUPABASE_API_URL}/check_in_history?user_id=eq.${user.id}`, {
+    const history = await apiRequest<{ date: string; checked: boolean }[]>(`${SUPABASE_API_URL}/check_in_history?user_id=eq.${user.id}`, {
       method: 'GET',
-      headers: createHeaders(),
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+      },
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(`Failed to fetch check-in history: ${response.status} - ${errorData.message || response.statusText}`);
-    }
-
-    const history = await response.json();
     return Array.isArray(history) ? history : [];
   } catch (error) {
     console.error('Error fetching check-in history:', error);

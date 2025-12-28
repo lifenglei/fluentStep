@@ -24,6 +24,7 @@ export interface Scenario {
   description: string;
   icon: string;
   color: string;
+  faIcon: string;
 }
 
 export interface UserProgress {
