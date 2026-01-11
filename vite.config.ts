@@ -2,7 +2,7 @@
  * @Author: lifenglei 1125911451@qq.com
  * @Date: 2025-12-26 22:11:15
  * @LastEditors: lifenglei 1125911451@qq.com
- * @LastEditTime: 2025-12-26 22:14:16
+ * @LastEditTime: 2026-01-02 23:10:24
  * @FilePath: /fluentStep/vite.config.ts
  * @Description: 
  * 
@@ -17,6 +17,14 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 3000,
         host: '0.0.0.0',
+        proxy: {
+          '/api': {
+            target: 'https://api.oick.cn',
+            changeOrigin: true,
+            secure: false,
+            rewrite: (path) => path.replace(/^\/api/, ''),
+          },
+        },
       },
       plugins: [react()],
       define: {

@@ -4,7 +4,24 @@ import { apiRequest } from './services/apiService';
 
 // ModelGate API 配置
 const MODELGATE_API_KEY = process.env.GEMINI_API_KEY || '';
+const TTS_API_KEY = process.env.TTS_API_KEY || '';
+
 const MODELGATE_BASE_URL = 'https://mg.aid.pub/v1';
+const MODE_TTS_URL = 'https://api.oick.cn'
+function extractJsonWithRegex(text) {
+  const regex = /```json\s*([\s\S]*?)\s*```/;
+  const match = text.match(regex);
+  
+  if (match && match[1]) {
+    try {
+      return JSON.parse(match[1]);
+    } catch (e) {
+      console.error('JSON解析失败:', e);
+      return null;
+    }
+  }
+  return null;
+}
 
 export async function fetchPhrases(scenario: string, count: number = 10): Promise<PhraseExercise[]> {
   try {
@@ -17,7 +34,7 @@ IMPORTANT:
 3. Provide EXACTLY 5 diverse example sentences using the 'correctAnswer' word.
 4. Each example must have both 'en' (English) and 'zh' (Chinese translation).
 5. Provide the part of speech (partOfSpeech) for the 'correctAnswer' word (e.g., "noun", "verb", "adjective", "adverb").
-6. Provide 2-3 common collocations (commonCollocations) - phrases or words that commonly go with the 'correctAnswer' word.
+6. Provide 2-3 common collocations (commonCollocations) - phrases or words that commonly go with the 'correctAnswer' word. Each collocation must include both English and Chinese translation in the format {"en": "collocation", "zh": "中文翻译"}.
 Return the data in a structured JSON format as an array of objects with the following structure:
 {
   "id": "unique-id",
@@ -27,7 +44,7 @@ Return the data in a structured JSON format as an array of objects with the foll
   "chineseMeaning": "完整句子中文翻译",
   "phonetic": "/IPA符号/",
   "partOfSpeech": "noun",
-  "commonCollocations": ["collocation 1", "collocation 2"],
+  "commonCollocations": [{"en": "collocation 1", "zh": "搭配1翻译"}, {"en": "collocation 2", "zh": "搭配2翻译"}],
   "additionalExamples": [
     {"en": "example sentence 1", "zh": "中文翻译1"},
     {"en": "example sentence 2", "zh": "中文翻译2"},
@@ -45,30 +62,16 @@ Return the data in a structured JSON format as an array of objects with the foll
         'Authorization': `Bearer ${MODELGATE_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'gemini-3-flash',
+        model: 'DeepSeek-V3',
         input: prompt,
         temperature: 0.7,
         max_output_tokens: 4000
       })
     });
     // ModelGate OpenAI Style 响应格式: data.output?.[0]?.content?.[0]?.text
-    const text = data.output?.[0]?.content?.[0]?.text || data.choices?.[0]?.message?.content;
-    
-    if (!text) {
-      console.error("No text content in response:", data);
-      return [];
-    }
-
-    // 尝试解析 JSON（可能包含 markdown 代码块）
-    let jsonText = text.trim();
-    // 移除可能的 markdown 代码块标记
-    if (jsonText.startsWith('```')) {
-      const lines = jsonText.split('\n');
-      jsonText = lines.slice(1, -1).join('\n');
-    }
-    
-    const phrases = JSON.parse(jsonText);
-    return Array.isArray(phrases) ? phrases : [];
+    const text = (data as any).choices?.[0]?.message?.content;
+    const jsonData = extractJsonWithRegex(text);
+    return jsonData 
   } catch (error) {
     console.error("Error fetching phrases:", error);
     return [];
@@ -93,7 +96,7 @@ export async function generateScenarioImage(scenarioTitle: string): Promise<stri
         output_format: 'png'
       })
     });
-    const base64Image = data.data?.[0]?.content;
+    const base64Image = (data as any).data?.[0]?.content;
     
     if (!base64Image) {
       console.warn("No image data in response:", data);
@@ -127,7 +130,7 @@ export async function generatePhraseImage(phrase: string, signal?: AbortSignal):
       signal // 传递 AbortSignal 以支持取消请求
     });
 
-    const base64Image = data.data?.[0]?.content;
+    const base64Image = (data as any).data?.[0]?.content;
     
     if (!base64Image) {
       console.warn("No image data in response:", data);
@@ -178,43 +181,31 @@ async function decodeAudioData(
 
 export async function speakText(text: string) {
   try {
-    const prompt = `Say clearly: ${text}`;
+    console.log("Speaking text:", text);
 
-    const data = await apiRequest(`${MODELGATE_BASE_URL}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${MODELGATE_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'gemini-2.5-flash-preview-tts',
-        input: prompt
-      })
-    });
+    const data = await apiRequest(`/api/api/txt?text=${encodeURIComponent(text)}&spd=5&apikey=e4dc5ab69e009a5ba9ccc91f9875062b`, {
+    }, false, 'blob');
+    console.log("TTS API Response:", data);
 
-    // 尝试从响应中提取音频数据
-    const base64Audio = data.output?.[0]?.content?.[0]?.inlineData?.data || 
-                       data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    // 直接使用 blob 创建音频元素播放
+    const audioUrl = URL.createObjectURL(data as Blob);
+    const audio = new Audio(audioUrl);
+    console.log("Audio element created:", audio);
     
-    if (!base64Audio) {
-      throw new Error("No audio data in response");
-    }
+    await audio.play();
+    
+    // 清理创建的 URL 对象
+    audio.onended = () => {
+      URL.revokeObjectURL(audioUrl);
+    };
 
-    const outputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-    const audioBuffer = await decodeAudioData(
-      decode(base64Audio),
-      outputAudioContext,
-      24000,
-      1,
-    );
-    const source = outputAudioContext.createBufferSource();
-    source.buffer = audioBuffer;
-    source.connect(outputAudioContext.destination);
-    source.start();
   } catch (err) {
     console.error("TTS failed, falling back to browser API", err);
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    window.speechSynthesis.speak(utterance);
+    // 回退到浏览器的语音合成 API
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      window.speechSynthesis.speak(utterance);
+    }
   }
 }

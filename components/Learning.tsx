@@ -66,6 +66,13 @@ const Learning: React.FC = () => {
     }
   }, [scenarioId, scenario, exercises.length, navigate]);
 
+  // Set selected scenario when scenario changes
+  useEffect(() => {
+    if (scenario && scenario.id === scenarioId) {
+      setSelectedScenario(scenario);
+    }
+  }, [scenarioId, scenario, setSelectedScenario]);
+
   const loadExercises = async () => {
     if (!scenario) return;
     
@@ -73,9 +80,6 @@ const Learning: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // 在获取到练习数据后再设置选中的场景
-      setSelectedScenario(scenario);
-      
       console.log('Calling fetchPhrases with:', scenario.title, 10);
       const initialPhrases = await fetchPhrases(scenario.title, 10);
       console.log('fetchPhrases returned:', initialPhrases.length, 'phrases');
@@ -100,9 +104,9 @@ const Learning: React.FC = () => {
     try {
       console.log('Calling generatePhraseImage for:', exercise.correctAnswer);
       // const img = await generatePhraseImage(exercise.correctAnswer);
-      setCurrentPhraseImage( '../assets/meng.jpg');
+      setCurrentPhraseImage( '../images/meng.jpg');
     } catch (err) {
-      setCurrentPhraseImage('../assets/meng.jpg');
+      setCurrentPhraseImage('../images/meng.jpg');
     } finally {
       setIsImageLoading(false);
     }
@@ -165,7 +169,7 @@ const Learning: React.FC = () => {
     if (scenario && exercises.length > 0 && currentIndex >= exercises.length - 3 && exercises.length < 100 && !isLoading) {
       loadMorePhrases();
     }
-  }, [currentIndex, exercises.length, scenario, loadMorePhrases, isLoading]);
+  }, [currentIndex, exercises.length, scenario, isLoading]);
 
   // Check if milestone reached
   const isMilestoneReached = learnedBatch.length >= 10 && isCurrentSolved;
@@ -211,82 +215,83 @@ const Learning: React.FC = () => {
   }
 
   return (
-    <div className="animate-fade-in pt-8 pb-48">
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        {currentPhraseImage && (
-          <img src={currentPhraseImage} className="w-full h-full object-cover opacity-20 blur-2xl scale-125 transition-opacity duration-1000" alt="" />
+    <div className="fixed inset-0 bg-[var(--bg-primary)] overflow-hidden flex flex-col">
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        {currentPhraseImage ? (
+          <img src={currentPhraseImage} className="w-full h-full object-cover opacity-30 blur-3xl scale-110 transition-all duration-1000" alt="" />
+        ) : (
+           <div className="w-full h-full bg-gradient-to-br from-slate-900 to-slate-800 opacity-90"></div>
         )}
-        <div className="absolute inset-0 bg-[var(--bg-primary)]/60 backdrop-blur-3xl"></div>
+        <div className="absolute inset-0 bg-[var(--bg-primary)]/40 backdrop-blur-[100px]"></div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 md:px-10 relative z-10">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
-          <div className="text-center md:text-left">
-            <span className="text-[10px] font-semibold text-[var(--accent-primary)] uppercase tracking-[0.2em] mb-1.5 block">Fluent Scenario Mastery</span>
-            <h2 className="text-2xl md:text-3xl font-bold text-[var(--text-primary)] tracking-tight">{scenario.title}</h2>
+      <div className="relative z-20 px-4 pt-6 pb-4 flex-shrink-0 w-full max-w-5xl mx-auto">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-lg">
+                <FontAwesomeIcon icon={scenario.faIcon as any} className="text-[var(--accent-primary)]" />
+             </div>
+             <div>
+                <h2 className="text-lg font-bold text-[var(--text-primary)] tracking-tight leading-tight">{scenario.title}</h2>
+                <div className="flex items-center gap-2 text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+                  <span>Progress</span>
+                  <div className="w-20 h-1 bg-slate-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-[var(--accent-primary)] transition-all duration-500"
+                      style={{ width: `${((currentIndex + 1) / exercises.length) * 100}%` }}
+                    ></div>
+                  </div>
+                </div>
+             </div>
           </div>
-          <div className="flex gap-3">
-            <div className="bg-[var(--card-bg)] px-6 py-3 rounded-2xl shadow-lg border border-[var(--border-primary)] text-center min-w-[120px] theme-transition">
-              <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide mb-0.5">Session Progress</p>
-              <p className="text-lg font-bold text-[var(--text-primary)]">{currentIndex + 1} <span className="text-slate-300 mx-1">/</span> {exercises.length}</p>
-            </div>
-            <div 
-              style={{ 
-                background: 'var(--accent-primary)', 
-                color: 'var(--accent-text)', 
-                boxShadow: '0 20px 25px -5px var(--shadow-color)',
-                borderColor: 'var(--accent-primary)'
-              }}
-              className="px-6 py-3 rounded-2xl text-center min-w-[120px] theme-transition border border-opacity-20"
-            >
-              <p className="text-[9px] font-semibold opacity-70 uppercase tracking-wide mb-0.5">Global Rank</p>
-              <p className="text-lg font-bold">Top 5%</p>
-            </div>
+          
+          <div className="flex gap-2">
+             <button onClick={() => navigate('/')} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all text-slate-500 hover:text-[var(--text-primary)]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+             </button>
           </div>
         </div>
+      </div>
 
+      <div className="relative z-10 flex-1 w-full max-w-5xl mx-auto px-4 pb-6 min-h-0 flex flex-col pt-2">
         {exercises.length > 0 ? (
-          <div>
-            <ExerciseItem 
-              key={exercises[currentIndex].id} 
-              exercise={exercises[currentIndex]} 
-              phraseImage={currentPhraseImage}
-              isImageLoading={isImageLoading}
-              onComplete={handleExerciseComplete}
-              onMistake={handleMistake}
-              onPrev={goToPrev}
-              onNext={goToNext}
-              canGoPrev={currentIndex > 0}
-              canGoNext={isCurrentSolved && currentIndex < exercises.length - 1}
-              isMilestoneReached={isMilestoneReached}
-              onShowSummary={() => {
-                setShowSummary(true);
-                navigate('/summary');
-              }}
-              isLast={currentIndex === exercises.length - 1}
-              isCompleted={completedExercises.has(exercises[currentIndex].id)}
-            />
-          </div>
+          <ExerciseItem 
+            key={exercises[currentIndex].id} 
+            exercise={exercises[currentIndex]} 
+            onComplete={handleExerciseComplete}
+            onMistake={handleMistake}
+            onPrev={goToPrev}
+            onNext={goToNext}
+            canGoPrev={currentIndex > 0}
+            canGoNext={isCurrentSolved && currentIndex < exercises.length - 1}
+            isMilestoneReached={isMilestoneReached}
+            onShowSummary={() => {
+              setShowSummary(true);
+              navigate('/summary');
+            }}
+            isLast={currentIndex === exercises.length - 1}
+            isCompleted={completedExercises.has(exercises[currentIndex].id)}
+          />
         ) : (
-          <div className="py-40 flex flex-col items-center bg-[var(--card-bg)]/80 backdrop-blur-2xl rounded-[4rem] shadow-2xl border border-[var(--border-primary)]">
-          <div className="w-16 h-16 flex items-center justify-center mb-10">
-            {scenario && (
-              <FontAwesomeIcon 
-                icon={scenario.faIcon as any} 
-                size="4x" 
-                className="text-[var(--accent-primary)]" 
-              />
-            )}
+          <div className="w-full h-full flex flex-col items-center justify-center bg-[var(--card-bg)]/80 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl border border-[var(--border-primary)]">
+            <div className="w-16 h-16 flex items-center justify-center mb-10">
+              {scenario && (
+                <FontAwesomeIcon 
+                  icon={scenario.faIcon as any} 
+                  size="4x" 
+                  className="text-[var(--accent-primary)]" 
+                />
+              )}
+            </div>
+            <div className="flex justify-center gap-2 mb-6">
+              <div className="w-2.5 h-2.5 rounded-full bg-[var(--accent-primary)] animate-pulse"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-[var(--accent-primary)] animate-pulse" style={{animationDelay: '0.2s'}}></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-[var(--accent-primary)] animate-pulse" style={{animationDelay: '0.4s'}}></div>
+            </div>
+            <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-3 tracking-tight text-center">
+              {'正在加载练习 请耐心等待'}
+            </h3>
           </div>
-          <div className="flex justify-center gap-2 mb-6">
-            <div className="w-2.5 h-2.5 rounded-full bg-[var(--accent-primary)] animate-pulse"></div>
-            <div className="w-2.5 h-2.5 rounded-full bg-[var(--accent-primary)] animate-pulse" style={{animationDelay: '0.2s'}}></div>
-            <div className="w-2.5 h-2.5 rounded-full bg-[var(--accent-primary)] animate-pulse" style={{animationDelay: '0.4s'}}></div>
-          </div>
-          <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-3 tracking-tight text-center">
-            {'正在加载练习 请耐心等待'}
-          </h3>
-        </div>
         )}
       </div>
     </div>

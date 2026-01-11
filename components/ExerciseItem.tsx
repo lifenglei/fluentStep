@@ -3,13 +3,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { PhraseExercise } from '../types';
 import { speakText } from '../geminiService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faCheck, faVolumeHigh } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faCheck, faVolumeHigh } from '@fortawesome/free-solid-svg-icons';
 import '@fortawesome/fontawesome-svg-core/styles.css';
 
 interface ExerciseItemProps {
   exercise: PhraseExercise;
-  phraseImage: string | null;
-  isImageLoading: boolean;
   onComplete: () => void;
   onMistake: (exercise: PhraseExercise) => void;
   onPrev?: () => void;
@@ -24,8 +22,6 @@ interface ExerciseItemProps {
 
 const ExerciseItem: React.FC<ExerciseItemProps> = ({ 
   exercise, 
-  phraseImage, 
-  isImageLoading, 
   onComplete, 
   onMistake,
   onPrev,
@@ -65,7 +61,9 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
   }, [isCompleted, exercise.id]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
+    let val = e.target.value;
+    // 过滤掉所有非拼音字符，只允许英文字母、空格和连字符
+    val = val.replace(/[^a-zA-Z\s-]/g, '');
     setUserInput(val);
     setIsError(false);
     
@@ -110,228 +108,183 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
   const sentenceParts = exercise.sentenceWithBlank.split('___');
 
   return (
-    <div className="w-full">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 overflow-hidden rounded-3xl border-[var(--border-primary)] bg-[var(--card-bg)] shadow-xl theme-transition max-h-[80vh] overflow-y-auto pt-6">
-        {/* 左侧：上中下结构 */}
-        <div className="flex flex-col border-r border-[var(--border-primary)] theme-transition">
-          {/* 上：情景图片展示 */}
-          <div className="bg-[var(--card-bg)] overflow-hidden flex-shrink-0 theme-transition min-h-[150px] max-h-[200px]">
-            <img 
+    <div className="w-full h-full flex flex-col">
+      <div className="flex-1 flex flex-col overflow-hidden rounded-[2.5rem] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-2xl relative transition-all duration-500">
+        
+        {/* Top Section: Image Banner */}
+        <div className={`relative w-full overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.25,0.1,0.25,1)] flex-shrink-0 ${
+            (isCorrect || isAnswerRevealed) ? 'h-[30%]' : 'h-[40%]'
+        }`}>
+             {/* Main Image - Fully Visible */}
+             <img 
               src="../images/meng.jpg" 
-              className="w-full h-full object-contain" 
+              className="w-full h-full object-cover object-[center_25%] transition-transform duration-1000 scale-105 group-hover:scale-110" 
               alt={exercise.correctAnswer}
             />
-          </div>
-
-          {/* 中：单词发音翻译 - 与右侧上半部分对齐 - 仅当答对或显示答案时可见 */}
-          {(isCorrect || isAnswerRevealed) && (
-            <div className="bg-[var(--card-bg)] dark:bg-slate-800 p-6 flex-shrink-0" style={{ minHeight: '150px', maxHeight: '200px' }}>
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <div className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">Key Word</div>
-                  <div className="text-2xl font-bold text-[var(--text-primary)]">{exercise.correctAnswer}</div>
-                  {exercise.phonetic && (
-                    <div className="text-sm text-[var(--text-muted)] mt-1">/{exercise.phonetic}/</div>
-                  )}
-                </div>
-                <button 
-                    onClick={() => handleSpeak(exercise.correctAnswer, 'word')} 
-                    className={`p-3 rounded-xl transition-all ${
-                      isPlaying === 'word' 
-                        ? 'bg-[var(--accent-primary)] text-[var(--accent-text)] shadow-lg' 
-                        : 'bg-[var(--accent-soft)] text-[var(--accent-primary)] hover:bg-[var(--accent-soft)/80]'
-                    }`}
-                >
-                  <FontAwesomeIcon icon="fa-solid fa-volume-high" size="lg" />
-                </button>
-              </div>
-              <div className="pt-4">
-                <div className="text-xs font-semibold text-[var(--success)] uppercase tracking-wider mb-2">Translation</div>
-                <div className="text-lg font-semibold text-[var(--text-primary)]">{exercise.correctAnswerChinese}</div>
-              </div>
+            {/* Gradient Overlay for seamless blend */}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/90 dark:to-slate-900/90"></div>
+            
+            {/* Floating Status Badge */}
+            <div className="absolute top-6 left-6 z-20 flex items-center gap-2 bg-black/20 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+                 <div className={`w-2 h-2 rounded-full ${isCorrect ? 'bg-green-400' : isError ? 'bg-red-400' : 'bg-blue-400 animate-pulse'}`}></div>
+                 <span className="text-[10px] font-bold text-white uppercase tracking-wider">
+                    {isCorrect ? 'Solved' : 'Challenge'}
+                 </span>
             </div>
-          )}
-
-          {/* 下：句子翻译 - 仅当答对或显示答案时可见 */}
-          {(isCorrect || isAnswerRevealed) && (
-            <div className="bg-[var(--card-bg)] p-6 flex-1 theme-transition">
-              <div className="text-xs font-semibold text-[var(--accent-primary)] uppercase tracking-wider mb-3">Full Sentence</div>
-              <div className="text-base font-medium text-[var(--text-primary)] leading-relaxed mb-3">
-                {exercise.sentenceWithBlank.replace('___', exercise.correctAnswer)}
-              </div>
-              <div className="pt-3">
-                <div className="text-sm text-[var(--text-muted)] leading-relaxed">
-                  {exercise.chineseMeaning}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* 右侧：上下结构 */}
-        <div className="flex flex-col">
-          {/* 上：单词填写 - 与左侧图片对齐 */}
-          <div className={`bg-[var(--card-bg)] transition-all duration-500 border-b-2 border-[var(--border-primary)] flex-shrink-0 theme-transition ${
-            isCorrect ? 'border-b-emerald-400' : 
-            isError ? 'border-b-rose-400' : 
-            ''
-          }`} style={{ minHeight: '150px', maxHeight: '200px' }}>
-            <div className="p-6 h-full flex flex-col justify-center">
-              {/* Status Badge */}
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${
-                    isCorrect ? 'bg-[var(--success)]' : 
-                    isError ? 'bg-[var(--error)]' : 
-                    'bg-[var(--accent-primary)] animate-pulse'
-                  }`}></div>
-                  <span className={`text-xs font-semibold uppercase tracking-wider ${
-                    isCorrect ? 'text-[var(--success)]' : 
-                    isError ? 'text-[var(--error)]' : 
-                    'text-[var(--text-muted)]'
-                  }`}>
-                    {isCorrect ? (isAnswerRevealed ? 'Revealed' : 'Correct!') : 'Fill in the blank'}
-                  </span>
-                </div>
-                {isCorrect && (
-                  <button 
-                    onClick={() => handleSpeak(exercise.sentenceWithBlank.replace('___', exercise.correctAnswer), 'main')} 
-                    className={`p-2.5 rounded-xl transition-all ${
-                      isPlaying === 'main' 
-                        ? 'bg-[var(--accent-primary)] text-[var(--accent-text)] shadow-lg' 
-                        : 'bg-[var(--accent-soft)] text-[var(--accent-primary)] hover:bg-[var(--accent-soft)/80]'
-                    }`}
-                  >
-                    <FontAwesomeIcon icon="fa-solid fa-volume-high" size="lg" />
-                  </button>
-                )}
-              </div>
+        {/* Middle Section: Scrollable Content */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar relative z-10 -mt-6">
+            <div className="px-6 md:px-10 pb-6">
+                
+                {/* Main Content Card */}
+                <div className="bg-white dark:bg-slate-800 rounded-[2rem] p-8 md:p-12 shadow-xl shadow-slate-200/50 dark:shadow-none ring-1 ring-slate-100 dark:ring-slate-700 relative min-h-[300px] flex flex-col justify-center">
+                    {/* Sentence Input */}
+                    <div className="text-center space-y-8">
+                        <div className="text-2xl md:text-3xl lg:text-4xl font-medium text-[var(--text-primary)] leading-loose font-serif tracking-wide relative z-0">
+                            <span className="opacity-90">{sentenceParts[0]}</span>
+                            <span className="relative inline-flex flex-col mx-3 align-baseline group justify-end pb-8">
+                                <input
+                                ref={inputRef}
+                                disabled={isCorrect}
+                                value={userInput}
+                                onChange={handleInputChange}
+                                onBlur={handleBlur}
+                                placeholder=""
+                                className={`bg-transparent border-b-[2px] outline-none transition-all text-center px-4 py-1 min-w-[160px] font-bold text-inherit tracking-wide placeholder:text-transparent ${
+                                    isCorrect 
+                                        ? 'border-[var(--success)] text-[var(--success)]' 
+                                        : isError 
+                                            ? 'border-[var(--error)] text-[var(--error)]' 
+                                            : 'border-slate-300 dark:border-slate-600 focus:border-[var(--accent-primary)] text-[var(--accent-primary)]'
+                                } ${shake ? 'animate-shake' : ''}`}
+                                />
+                                {/* Floating Label/Hint - Positioned absolute at bottom, inside the padding area */}
+                                <span className={`absolute bottom-0 left-1/2 -translate-x-1/2 text-xs font-sans font-bold text-slate-400 uppercase tracking-widest transition-all duration-300 whitespace-nowrap z-50 ${userInput ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}`}>
+                                    {exercise.correctAnswerChinese}
+                                </span>
+                            </span>
+                            <span className="opacity-90">{sentenceParts[1]}</span>
+                        </div>
+                        
+                        {!isCorrect && (
+                           <div className="flex justify-center">
+                               {errorCount >= 3 ? (
+                                   <button 
+                                     onClick={handleShowAnswer}
+                                     className="text-xs font-bold text-amber-500 hover:text-amber-600 transition-colors uppercase tracking-widest border-b border-amber-500/30 pb-0.5"
+                                   >
+                                     Show Answer
+                                   </button>
+                               ) : (
+                                   <div className="h-6"></div> // Spacer
+                               )}
+                           </div>
+                        )}
 
-              {/* Sentence with Blank */}
-              <div className="text-left mb-6">
-                <div className="text-xl md:text-2xl font-semibold text-[var(--text-primary)] leading-relaxed theme-transition">
-                  <span className="opacity-80">{sentenceParts[0]}</span>
-                  <span className="relative inline-block mx-2 md:mx-3 align-middle">
-                    <div className="relative inline-block">
-                      {/* Simple underline style */}
-                      <input
-                        ref={inputRef}
-                        disabled={isCorrect}
-                        value={userInput}
-                        onChange={handleInputChange}
-                        onBlur={handleBlur}
-                        placeholder="..."
-                        className={`bg-transparent border-b border-[var(--border-primary)] outline-none transition-all text-center px-0 py-1 min-w-[120px] md:min-w-[160px] font-semibold text-xl md:text-2xl tracking-wide placeholder:text-[var(--text-muted)] ${isCorrect ? 'border-[var(--success)] text-[var(--success)]' : isError ? 'border-[var(--error)] text-[var(--error)]' : 'text-[var(--accent-primary)] focus:border-[var(--accent-primary)]'} ${shake ? 'animate-pulse' : ''} theme-transition`}
-                        style={{ width: 'auto' }}
-                      />
+                        {/* Play Full Sentence Button - Shown when correct */}
+                        {(isCorrect || isAnswerRevealed) && (
+                           <div className="flex justify-center pt-2 animate-fade-in-up">
+                                <button 
+                                    onClick={() => handleSpeak(exercise.sentenceWithBlank.replace('___', exercise.correctAnswer), 'main')}
+                                    className="px-6 py-2.5 bg-[var(--accent-primary)]/10 hover:bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] rounded-full font-bold text-sm transition-all flex items-center gap-2.5 group"
+                                >
+                                    <div className="w-6 h-6 rounded-full bg-[var(--accent-primary)] text-white flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <FontAwesomeIcon icon={faVolumeHigh} size="xs" />
+                                    </div>
+                                    <span>Play Full Sentence</span>
+                                </button>
+                           </div>
+                        )}
                     </div>
-                  </span>
-                  <span className="text-sm font-medium text-[var(--accent-primary)] ml-2">({exercise.correctAnswerChinese})</span>
-                  <span className="opacity-80">{sentenceParts[1]}</span>
-                </div>
-              </div>
 
-              {/* Show Answer Button */}
-              {!isCorrect && errorCount >= 3 && (
-                <div className="flex justify-center">
-                  <button 
-                    onClick={handleShowAnswer} 
-                    className="px-4 py-2 bg-[var(--warning-bg)] hover:bg-[var(--warning-bg)/80] text-[var(--warning)] rounded-xl text-sm font-medium transition-all shadow-sm theme-transition"
-                  >
-                    Show Answer
-                  </button>
+                    {/* Revealed Information */}
+                    {(isCorrect || isAnswerRevealed) && (
+                        <div className="mt-8 pt-8 border-t border-slate-100 dark:border-slate-700 animate-fade-in-up">
+                            <div className="flex flex-col md:flex-row gap-6 items-start">
+                                {/* Left: Word Definition */}
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-4 mb-2">
+                                        <h3 className="text-3xl font-bold text-[var(--text-primary)]">{exercise.correctAnswer}</h3>
+                                        <button 
+                                            onClick={() => handleSpeak(exercise.correctAnswer, 'word')}
+                                            className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-[var(--accent-primary)] hover:scale-110 transition-transform"
+                                        >
+                                            <FontAwesomeIcon icon={faVolumeHigh} size="sm" />
+                                        </button>
+                                    </div>
+                                    <div className="text-lg text-slate-600 dark:text-slate-300 font-medium mb-4">{exercise.chineseMeaning}</div>
+                                </div>
+
+                                {/* Right: Examples */}
+                                <div className="flex-1 space-y-3 w-full">
+                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Usage Examples</h4>
+                                    {exercise.additionalExamples.map((ex, i) => (
+                                        <div key={i} className="flex gap-4 items-start p-4 rounded-xl bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors group">
+                                            <button 
+                                                onClick={() => handleSpeak(ex.en, `ex-${i}`)}
+                                                className="flex-shrink-0 w-10 h-10 rounded-full bg-white dark:bg-slate-600 flex items-center justify-center text-[var(--accent-primary)] hover:scale-110 hover:bg-[var(--accent-primary)] hover:text-white transition-all shadow-sm"
+                                            >
+                                                <FontAwesomeIcon icon={faVolumeHigh} size="sm" />
+                                            </button>
+                                            <div>
+                                                <p className="text-sm font-medium text-[var(--text-primary)] mb-1 leading-relaxed">{ex.en}</p>
+                                                <p className="text-xs text-slate-500">{ex.zh}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
-              )}
             </div>
-          </div>
+        </div>
 
-          {/* 下：示例演示 - 仅当答对或显示答案时可见 */}
-          {(isCorrect || isAnswerRevealed) && (
-            <div className="bg-[var(--card-bg)] p-4 flex-1 overflow-y-auto theme-transition">
-              <div className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-4">
-                Example Sentences
-              </div>
-              <div className="space-y-3">
-                {exercise.additionalExamples.slice(0, 3).map((ex, i) => (
-                  <div 
-                    key={i} 
-                    className="group bg-[var(--bg-secondary)] p-4 rounded-xl border border-[var(--border-primary)] hover:border-[var(--accent-primary)] transition-all duration-300 theme-transition"
-                  >
-                    <div className="flex items-start gap-3">
-                      <button 
-                        onClick={() => handleSpeak(ex.en, `ex-${i}`)} 
-                        className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
-                          isPlaying === `ex-${i}` 
-                            ? 'bg-[var(--accent-primary)] text-[var(--accent-text)] shadow-lg' 
-                            : 'bg-[var(--card-bg)] text-[var(--text-muted)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent-primary)]'
-                        }`}
-                      >
-                        <FontAwesomeIcon icon="fa-solid fa-volume-high" size="sm" />
-                      </button>
-                      <div className="flex-1 space-y-1">
-                        <p className="text-sm font-medium text-[var(--text-primary)] leading-relaxed theme-transition">
-                          {ex.en}
-                        </p>
-                        <p className="text-xs text-[var(--text-muted)] italic theme-transition">
-                          {ex.zh}
-                        </p>
+        {/* Bottom Section: Minimal Footer */}
+        <div className="flex-shrink-0 p-6 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md z-20 flex justify-between items-center border-t border-white/20">
+              <button 
+                onClick={onPrev} 
+                disabled={!canGoPrev} 
+                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+                  !canGoPrev ? 'opacity-0 pointer-events-none' : 'hover:bg-black/5 dark:hover:bg-white/10 text-[var(--text-primary)]'
+                }`}
+              >
+                <FontAwesomeIcon icon={faArrowLeft} />
+              </button>
+
+              <div className="flex-1 px-8">
+                  {/* Progress Bar or Status */}
+                  {(isCorrect || isAnswerRevealed) && (
+                      <div className="text-center animate-fade-in">
+                          <span className="text-xs font-bold text-green-500 uppercase tracking-widest">Excellent</span>
                       </div>
-                    </div>
-                  </div>
-                ))}
+                  )}
               </div>
-            </div>
-          )}
+
+              {isMilestoneReached && onShowSummary ? (
+                    <button 
+                    onClick={onShowSummary}
+                    className="px-6 py-3 bg-[var(--text-primary)] text-[var(--bg-primary)] rounded-full font-bold text-sm hover:scale-105 active:scale-95 transition-all shadow-lg"
+                    >
+                    <span>Review</span>
+                    </button>
+            ) : (
+                    <button 
+                    onClick={onNext}
+                    disabled={!canGoNext}
+                    className={`px-6 py-3 rounded-full font-bold text-sm transition-all flex items-center gap-2 ${
+                        !canGoNext
+                        ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+                        : 'bg-[var(--text-primary)] text-[var(--bg-primary)] hover:scale-105 active:scale-95 shadow-lg'
+                    }`}
+                    >
+                    <span>Next</span>
+                    <FontAwesomeIcon icon={faArrowRight} />
+                    </button>
+            )}
         </div>
 
-        {/* 底部导航操作区域 - 与卡片融为一体 */}
-        <div className={`col-span-1 lg:col-span-2 bg-[var(--card-bg)] ${
-          isCorrect ? 'border-[var(--success)]' : 
-          isError ? 'border-[var(--error)]' : 
-          'border-[var(--border-primary)]'
-        } theme-transition`}>
-          <div className="flex items-center justify-between p-4">
-            <button 
-              onClick={onPrev} 
-              disabled={!canGoPrev} 
-              className={`h-10 w-10 md:h-12 md:w-12 flex items-center justify-center rounded-full transition-all ${
-                !canGoPrev 
-                  ? 'bg-[var(--bg-secondary)] text-[var(--text-muted)] cursor-not-allowed' 
-                  : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--accent-soft)] active:scale-90'
-              }`}
-            >
-              <FontAwesomeIcon icon="fa-solid fa-arrow-left" size="lg" />
-            </button>
-            <div className="flex-grow flex justify-center">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-[var(--success)] animate-pulse"></div>
-                <span className="text-[9px] md:text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Live AI Environment</span>
-              </div>
-            </div>
-            {isMilestoneReached && onShowSummary ? (
-              <button 
-                onClick={onShowSummary} 
-                className="h-10 md:h-12 flex items-center gap-2 md:gap-3 px-4 md:px-6 rounded-full transition-all font-semibold text-xs md:text-sm bg-[var(--accent-primary)] text-[var(--accent-text)] hover:bg-[var(--accent-primary)]/90 hover:scale-[1.02] active:scale-95 shadow-lg theme-transition"
-              >
-                Review 10
-                <FontAwesomeIcon icon="fa-solid fa-check" size="lg" />
-              </button>
-            ) : (
-              <button 
-                onClick={onNext} 
-                disabled={!canGoNext} 
-                className={`h-10 md:h-12 flex items-center gap-2 md:gap-3 px-4 md:px-6 rounded-full transition-all font-semibold text-xs md:text-sm ${
-                  !canGoNext 
-                    ? 'bg-[var(--bg-secondary)] text-[var(--text-muted)] cursor-not-allowed' 
-                    : 'bg-[var(--accent-primary)] text-[var(--accent-text)] hover:bg-[var(--accent-primary)]/90 hover:scale-[1.02] shadow-lg active:scale-95'
-                } theme-transition`}
-              >
-                {isLast ? 'Finish' : 'Next'}
-                <FontAwesomeIcon icon="fa-solid fa-arrow-right" size="lg" />
-              </button>
-            )}
-          </div>
-        </div>
       </div>
     </div>
   );

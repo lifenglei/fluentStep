@@ -25,8 +25,9 @@ export const setUnauthorizedHandler = (handler: UnauthorizedHandler): void => {
 export const apiRequest = async <T>(
   url: string,
   options: RequestInit = {},
-  includeAuth: boolean = true
-): Promise<T> => {
+  includeAuth: boolean = true,
+  responseType: 'json' | 'blob' | 'arraybuffer' = 'json'
+): Promise<T | Blob | ArrayBuffer> => {
   try {
     // 合并请求头
     const headers = {
@@ -53,7 +54,12 @@ export const apiRequest = async <T>(
     }
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch {
+        errorData = { message: await response.text() };
+      }
       throw new Error(errorData.message || errorData.error_description || errorData.error || `${response.status} ${response.statusText}`);
     }
 
@@ -62,7 +68,17 @@ export const apiRequest = async <T>(
       return {} as T;
     }
 
-    return response.json() as Promise<T>;
+    // 根据指定的响应类型处理响应
+    switch (responseType) {
+      case 'json':
+        return response.json() as Promise<T>;
+      case 'blob':
+        return response.blob();
+      case 'arraybuffer':
+        return response.arrayBuffer();
+      default:
+        return response.json() as Promise<T>;
+    }
   } catch (error) {
     console.error('API Request Error:', error);
     throw error;

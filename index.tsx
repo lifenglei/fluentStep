@@ -2,7 +2,7 @@
  * @Author: lifenglei 1125911451@qq.com
  * @Date: 2025-12-26 21:19:36
  * @LastEditors: lifenglei 1125911451@qq.com
- * @LastEditTime: 2025-12-27 10:30:09
+ * @LastEditTime: 2026-01-10 20:52:26
  * @FilePath: /fluentStep/index.tsx
  * @Description: 
  * 
@@ -27,7 +27,5 @@ if (!rootElement) {
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+  <App />
 );
