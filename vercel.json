@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/proxy/tts/:path*",
+      "destination": "https://api.oick.cn/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
